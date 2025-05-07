@@ -1,53 +1,49 @@
 import express from "express";
-import http from "http";
+import https from "https";
 import { Server } from "socket.io";
+import path from "path";
+import fs from "fs";
 
 const app = express();
-const PORT = process.env.PORT || 3010;
-
-const server = http.createServer(app);
+const server = https.createServer(
+  {
+    key: fs.readFileSync("./cert/key.pem"),
+    cert: fs.readFileSync("./cert/cert.pem"),
+  },
+  app
+);
 const io = new Server(server, {
   cors: {
-    origin: "*", // allow mobile app to connect
+    origin: "*", // Allow cross-origin requests
     methods: ["GET", "POST"],
   },
 });
 
+// Serve static HTML files from 'public' folder
+app.use(express.static(path.join(__dirname, "../public")));
+
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("New user connected");
 
-  socket.on("join", (roomId) => {
-    socket.join(roomId);
-    socket.to(roomId).emit("user-joined", socket.id);
-    console.log(`User ${socket.id} joined room ${roomId}`);
+  socket.on("join", (room) => {
+    socket.join(room);
+    socket.to(room).emit("user-joined");
   });
 
-  socket.on("offer", (data) => {
-    socket.to(data.to).emit("offer", {
-      from: socket.id,
-      sdp: data.sdp,
-    });
+  socket.on("offer", (offer, room) => {
+    socket.to(room).emit("offer", offer);
   });
 
-  socket.on("answer", (data) => {
-    socket.to(data.to).emit("answer", {
-      from: socket.id,
-      sdp: data.sdp,
-    });
+  socket.on("answer", (answer, room) => {
+    socket.to(room).emit("answer", answer);
   });
 
-  socket.on("ice-candidate", (data) => {
-    socket.to(data.to).emit("ice-candidate", {
-      from: socket.id,
-      candidate: data.candidate,
-    });
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+  socket.on("ice-candidate", (candidate, room) => {
+    socket.to(room).emit("ice-candidate", candidate);
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Signaling server running on port ${PORT}`);
+const PORT = parseInt(process.env.PORT || "3010", 10);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
