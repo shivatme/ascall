@@ -94,7 +94,7 @@ io.on("connection", (socket) => {
     console.log(`❌ Disconnected: ${socket.id}`);
   });
 });
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || "3003", 10);
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
