@@ -1,0 +1,60 @@
+name: Deploy Node.js TypeScript Backend to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.19.0"
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          npm install
+
+      - name: Build TypeScript project
+        run: |
+          cd backend
+          npm run build # assumes "build" runs `tsc`
+
+      - name: Prepare SSH key
+        run: |
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > private.pem
+          chmod 600 private.pem
+
+      - name: Clean EC2 deploy directory
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "rm -rf /home/ubuntu/ascall/backend/dist "
+
+      - name: Upload build to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i private.pem -r backend/dist backend/package.json backend/package-lock.json ubuntu@${{ secrets.EC2_PUBLIC_IP }}:/home/ubuntu/ascall/backend
+
+      - name: SSH into EC2 and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "
+            cd /home/ubuntu/ascall/backend &&
+            npm install --omit=dev &&
+            pm2 delete ascall-socket-server || true &&
+            pm2 start dist/index.js --name 'ascall-socket-server'
+          "
