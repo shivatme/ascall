@@ -43,6 +43,7 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
 
   useEffect(() => {
     if (callState.incomingCall) {
+      console.log("Incoming call", callState.incomingCall);
       navigation.navigate("IncomingCall", {
         callerId: callState.incomingCall.from,
         roomId: callState.incomingCall.roomId,

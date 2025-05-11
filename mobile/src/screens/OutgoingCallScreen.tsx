@@ -12,12 +12,17 @@ function OutgoingCallScreen({
   route,
   navigation,
 }: OutgoingCallScreenProps): JSX.Element {
-  const { callUser, socket } = useSocket();
+  const { callUser, endCall, socket } = useSocket();
 
   const { calleeId, roomId } = route.params;
 
   function makeCall(calleeId: string) {
     callUser(calleeId, roomId);
+  }
+
+  function endCallNow() {
+    endCall(calleeId);
+    navigation.navigate("MakeCall");
   }
 
   useEffect(() => {
@@ -31,8 +36,13 @@ function OutgoingCallScreen({
       console.log("✅ Call accepted, navigating to CallScreen");
       navigation.navigate("Call", { roomId, isInitiator: true });
     };
+    const handleCallRejected = ({ roomId }: { roomId: string }) => {
+      console.log("✅ Call rejected, navigating to MakeCallScreen");
+      navigation.navigate("MakeCall");
+    };
 
     socket.on("call-accepted", handleCallAccepted);
+    socket.on("call-rejected", handleCallRejected);
 
     return () => {
       socket.off("call-accepted", handleCallAccepted);
@@ -83,8 +93,7 @@ function OutgoingCallScreen({
       >
         <TouchableOpacity
           onPress={() => {
-            //   setType('JOIN');
-            //   otherUserId.current = null;
+            endCallNow();
           }}
           style={{
             backgroundColor: "#FF5D5D",

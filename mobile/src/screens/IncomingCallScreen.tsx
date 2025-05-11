@@ -1,5 +1,5 @@
-import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
 
@@ -23,7 +23,15 @@ function IncomingCallScreen({
 
   function rejectCallNow() {
     rejectCall(callerId);
+    navigation.navigate("MakeCall");
   }
+
+  useEffect(() => {
+    if (callState.incomingCall === null) {
+      console.log("Call ended");
+      navigation.navigate("MakeCall");
+    }
+  }, [callState]);
   return (
     <View
       style={{
@@ -54,6 +62,8 @@ function IncomingCallScreen({
         style={{
           justifyContent: "center",
           alignItems: "center",
+          flexDirection: "row",
+          gap: 40,
         }}
       >
         <TouchableOpacity
@@ -70,6 +80,22 @@ function IncomingCallScreen({
           }}
         >
           <Ionicons name="call" size={30} color="white" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            rejectCallNow();
+          }}
+          style={{
+            backgroundColor: "#FF5D5D",
+            borderRadius: 30,
+            height: 60,
+            aspectRatio: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <SimpleLineIcons name="call-end" size={30} color="white" />
         </TouchableOpacity>
       </View>
     </View>

@@ -55,11 +55,16 @@ io.on("connection", (socket) => {
 
   socket.on("reject-call", ({ callerId }) => {
     console.log(`❌ Call rejected by ${socket.id}`);
+    console.log(callerId);
     io.to(callerId).emit("call-rejected", { from: socket.id });
   });
 
-  socket.on("end-call", ({ roomId }) => {
+  socket.on("end-call", ({ calleeId }) => {
     console.log(`📴 Call ended by ${socket.id}`);
+    const calleeSocket = userSockets[calleeId];
+    socket.to(calleeSocket).emit("call-ended", { from: socket.id });
+  });
+  socket.on("end-call-room", ({ roomId }) => {
     socket.to(roomId).emit("call-ended", { from: socket.id });
   });
 

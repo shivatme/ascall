@@ -9,13 +9,13 @@ import React, {
 import { io, Socket } from "socket.io-client";
 
 // Replace with your backend URL
-const SOCKET_URL = "http://192.168.29.162:3000";
+const SOCKET_URL = "http://192.168.29.162:3003";
 
 interface SocketContextType {
   socket: Socket | null;
   socketInitialized: boolean;
   callState: {
-    incomingCall?: { from: string; roomId: string };
+    incomingCall?: { from: string; roomId: string } | null;
   };
   sendOffer: (offer: any, roomId: string) => void;
   sendAnswer: (answer: any, roomId: string) => void;
@@ -23,7 +23,8 @@ interface SocketContextType {
   callUser: (calleeId: string, roomId: string) => void;
   acceptCall: (callerId: string, roomId: string) => void;
   rejectCall: (callerId: string) => void;
-  endCall: (roomId: string) => void;
+  endCall: (calleeId: string) => void;
+  endCallByRoomId: (roomId: string) => void;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -49,6 +50,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket.on("incoming-call", ({ from, roomId }) => {
       console.log("📲 Incoming call from", from);
       setCallState({ incomingCall: { from, roomId } });
+    });
+    socket.on("call-rejected", ({ from }) => {
+      console.log("📲 Rejected call ");
+      setCallState({ incomingCall: null });
+    });
+    socket.on("call-ended", ({ from }) => {
+      console.log("📲 Call ended ");
+      setCallState({ incomingCall: null });
     });
 
     socket.on("disconnect", () => {
@@ -82,8 +91,20 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       emit("ice-candidate", { candidate, roomId }),
     callUser: (calleeId, roomId) => emit("call-user", { calleeId, roomId }),
     acceptCall: (callerId, roomId) => emit("accept-call", { callerId, roomId }),
-    rejectCall: (callerId) => emit("reject-call", { callerId }),
-    endCall: (roomId) => emit("end-call", { roomId }),
+    rejectCall: (callerId) => {
+      console.log("rejectCall", callerId);
+      emit("reject-call", { callerId });
+      setCallState({ incomingCall: null });
+    },
+    endCall: (calleeId) => {
+      emit("end-call", { calleeId });
+      console.log("endCall", calleeId);
+      setCallState({ incomingCall: null });
+    },
+    endCallByRoomId: (roomId) => {
+      emit("end-call-room", { roomId });
+      setCallState({ incomingCall: null });
+    },
   };
 
   return (

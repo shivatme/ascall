@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import {
   RTCPeerConnection,
   RTCView,
@@ -9,9 +9,11 @@ import {
   RTCSessionDescription,
 } from "react-native-webrtc";
 import { useSocket } from "../context/SocketContext";
+import { SimpleLineIcons } from "@expo/vector-icons";
 
 interface CallScreenProps {
   route: any;
+  navigation: any;
 }
 
 let mediaConstraints = {
@@ -24,7 +26,7 @@ let mediaConstraints = {
 
 let isVoiceOnly = false;
 
-function CallScreen({ route }: CallScreenProps): JSX.Element {
+function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   const { roomId, isInitiator } = route.params;
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -34,7 +36,8 @@ function CallScreen({ route }: CallScreenProps): JSX.Element {
   const localMediaStream = useRef<MediaStream | null>(null);
   const remoteMediaStream = useRef<MediaStream | null>(null);
 
-  const { socket, sendOffer, sendAnswer, sendCandidate } = useSocket();
+  const { socket, sendOffer, sendAnswer, sendCandidate, endCallByRoomId } =
+    useSocket();
 
   async function makeCall() {
     if (!socket) return;
@@ -248,19 +251,11 @@ function CallScreen({ route }: CallScreenProps): JSX.Element {
     } catch (error) {
       console.log(error, "icers");
     }
-
-    // console.log("Adding ICE candidate immediately");
   }
 
-  function processCandidates() {
-    console.log(
-      "Processing queued ICE candidates:",
-      remoteCandidates.current.length
-    );
-    remoteCandidates.current.forEach((candidate) => {
-      peerConnection.current?.addIceCandidate(candidate);
-    });
-    remoteCandidates.current = [];
+  function endCallNow() {
+    endCallByRoomId(roomId);
+    navigation.navigate("MakeCall");
   }
 
   return (
@@ -283,6 +278,31 @@ function CallScreen({ route }: CallScreenProps): JSX.Element {
           />
         </View>
       )}
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          position: "absolute",
+          bottom: 20,
+          alignSelf: "center",
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            endCallNow();
+          }}
+          style={{
+            backgroundColor: "#FF5D5D",
+            borderRadius: 30,
+            height: 60,
+            aspectRatio: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <SimpleLineIcons name="call-end" size={30} color="white" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -317,143 +337,3 @@ const styles = StyleSheet.create({
 });
 
 export default CallScreen;
-
-// let localMediaStream1: MediaStream | null = null;
-//   let remoteMediaStream1: MediaStream | null = null;
-//   const peerConnection1 = new RTCPeerConnection({
-//     iceServers: [
-//       {
-//         urls: "stun:stun.l.google.com:19302",
-//       },
-//       {
-//         urls: "stun:stun1.l.google.com:19302",
-//       },
-//       {
-//         urls: "stun:stun2.l.google.com:19302",
-//       },
-//     ],
-//   });
-//   async function makeCall2() {
-//     if (!socket) return;
-//     try {
-//       const mediaStream = await mediaDevices.getUserMedia(mediaConstraints);
-
-//       if (isVoiceOnly) {
-//         let videoTrack = mediaStream.getVideoTracks()[0];
-//         videoTrack.enabled = false;
-//       }
-
-//       setLocalStream(mediaStream);
-//       localMediaStream1 = mediaStream;
-//     } catch (err) {
-//       console.log(err);
-//       // Handle Error
-//     }
-
-//     peerConnection1.addEventListener("negotiationneeded", (event) => {
-//       // You can start the offer stages here.
-//       // Be careful as this event can be called multiple times.
-//       socket.emit("offer", { offer: peerConnection1.localDescription, roomId });
-//     });
-//     peerConnection1.addEventListener("track", (event) => {
-//       // Grab the remote track from the connected participant.
-//       remoteMediaStream1 = remoteMediaStream1 || new MediaStream();
-//       if (event.track) {
-//         remoteMediaStream1.addTrack(event.track);
-//         setRemoteStream(remoteMediaStream1);
-//       }
-//     });
-//     if (localMediaStream1) {
-//       let ml = localMediaStream1;
-//       localMediaStream1
-//         .getTracks()
-//         .forEach((track) => peerConnection1.addTrack(track, ml));
-//     }
-
-//     let sessionConstraints = {
-//       mandatory: {
-//         OfferToReceiveAudio: true,
-//         OfferToReceiveVideo: true,
-//         VoiceActivityDetection: true,
-//       },
-//     };
-//     try {
-//       const offerDescription = await peerConnection1.createOffer(
-//         sessionConstraints
-//       );
-//       await peerConnection1.setLocalDescription(offerDescription);
-
-//       socket.emit("offer", { offer: offerDescription, roomId });
-//     } catch (err) {
-//       // Handle Errors
-//     }
-//     try {
-//       // Use the received offerDescription
-//       //@ts-ignore
-//       socket.on("offer", async (offerDescription) => {
-//         const offerDescription1 = new RTCSessionDescription(
-//           offerDescription.offer
-//         );
-//         await peerConnection1.setRemoteDescription(offerDescription1);
-//         const answerDescription = await peerConnection1.createAnswer();
-//         socket.emit("answer", { answer: answerDescription, roomId });
-
-//         await peerConnection1.setLocalDescription(answerDescription);
-//       });
-
-//       // Here is a good place to process candidates.
-//       processCandidates1();
-//       // Send the answerDsoescription back as a response to the offerDescription.
-//     } catch (err) {
-//       // Handle Errors
-//     }
-//     try {
-//       // Use the received answerDescription
-//       //@ts-ignore
-//       socket.on("answer", async (answerDescription) => {
-//         const answerDescription1 = new RTCSessionDescription(
-//           answerDescription.answer
-//         );
-
-//         await peerConnection1.setRemoteDescription(answerDescription1);
-//       });
-//     } catch (err) {
-//       // Handle Error
-//     }
-//     peerConnection1.addEventListener("icecandidate", (event) => {
-//       if (!event.candidate) {
-//         return;
-//       }
-//       socket.emit("ice-candidate", { candidate: event.candidate, roomId });
-//     });
-
-//     socket.on("ice-candidate", (candidate) => {
-//       handleRemoteCandidate1(candidate.candidate);
-//     });
-//   }
-
-//   useEffect(() => {
-//     // makeCall2();
-//   }, []);
-//   let remoteCandidates1: RTCIceCandidate[] = [];
-
-//   function handleRemoteCandidate1(iceCandidate: RTCIceCandidate) {
-//     iceCandidate = new RTCIceCandidate(iceCandidate);
-
-//     if (peerConnection1.remoteDescription == null) {
-//       return remoteCandidates1.push(iceCandidate);
-//     }
-
-//     return peerConnection1.addIceCandidate(iceCandidate);
-//   }
-
-//   function processCandidates1() {
-//     if (remoteCandidates1.length < 1) {
-//       return;
-//     }
-
-//     remoteCandidates1.map((candidate) =>
-//       peerConnection1.addIceCandidate(candidate)
-//     );
-//     remoteCandidates1 = [];
-//   }
