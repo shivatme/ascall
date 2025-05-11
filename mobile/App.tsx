@@ -12,6 +12,10 @@ import {
 } from "react-native-webrtc";
 import io from "socket.io-client";
 import { NavigationContainer } from "@react-navigation/native";
+import MakeCallScreen from "./src/screens/MakeCallScreen";
+import IncomingCallScreen from "./src/screens/IncomingCallScreen";
+import OutgoingCallScreen from "./src/screens/OutgoingCallScreen";
+import CallNavigator from "./src/navigation/CallNavigator";
 
 const socket = io("http://192.168.29.162:3000", {
   transports: ["websocket"],
@@ -208,13 +212,14 @@ const App = (): JSX.Element => {
     <NavigationContainer>
       <SafeAreaView style={styles.container}>
         <StatusBar style="light" backgroundColor="#000" />
-        {localStream && (
+        {/* {localStream && (
           <RTCView streamURL={localStream.toURL()} style={styles.video} />
         )}
         {remoteStream && (
           <RTCView streamURL={remoteStream.toURL()} style={styles.video} />
         )}
-        <Text>APP</Text>
+        <Text>APP</Text> */}
+        <CallNavigator />
       </SafeAreaView>
     </NavigationContainer>
   );
@@ -227,7 +232,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
   },
-  video: { width: 150, height: 250, backgroundColor: "black" },
 });
 
 export default App;
