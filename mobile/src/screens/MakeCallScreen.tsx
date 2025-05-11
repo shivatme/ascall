@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -11,18 +11,44 @@ import {
   TouchableOpacity,
 } from "react-native";
 import TextInputContainer from "../components/AppTextInput";
+import { useSocket } from "../context/SocketContext";
 
-interface MakeCallScreenProps {}
+interface MakeCallScreenProps {
+  navigation: any;
+}
 
-function MakeCallScreen({}: MakeCallScreenProps): JSX.Element {
+function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
   const [calleeId, setCalleeId] = useState<string>("");
   const [callerId] = useState(
     Math.floor(100000 + Math.random() * 900000).toString()
   );
-
+  const { socket, callState } = useSocket();
+  console.log(callState);
+  useEffect(() => {
+    if (socket) {
+      console.log("Registering user with socket ID");
+      socket.emit("register-user", callerId); // Register user on backend with their unique ID
+    } else {
+      console.log("Socket is not initialized yet.");
+    }
+  }, [socket, callerId]);
   function makeCall(calleeId: string) {
-    console.log(calleeId);
+    const roomId = Math.random().toString();
+    navigation.navigate("OutgoingCall", {
+      calleeId,
+      roomId,
+    });
+    // callUser(calleeId, roomId);
   }
+
+  useEffect(() => {
+    if (callState.incomingCall) {
+      navigation.navigate("IncomingCall", {
+        callerId: callState.incomingCall.from,
+        roomId: callState.incomingCall.roomId,
+      });
+    }
+  }, [callState]);
 
   return (
     <KeyboardAvoidingView

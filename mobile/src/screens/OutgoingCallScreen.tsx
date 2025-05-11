@@ -1,14 +1,44 @@
 import { SimpleLineIcons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useSocket } from "../context/SocketContext";
 
 interface OutgoingCallScreenProps {
-  calleeId?: string;
+  route: any;
+  navigation: any;
 }
 
 function OutgoingCallScreen({
-  calleeId,
+  route,
+  navigation,
 }: OutgoingCallScreenProps): JSX.Element {
+  const { callUser, socket } = useSocket();
+
+  const { calleeId, roomId } = route.params;
+
+  function makeCall(calleeId: string) {
+    callUser(calleeId, roomId);
+  }
+
+  useEffect(() => {
+    makeCall(calleeId);
+  }, [calleeId]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCallAccepted = ({ roomId }: { roomId: string }) => {
+      console.log("✅ Call accepted, navigating to CallScreen");
+      navigation.navigate("Call", { roomId });
+    };
+
+    socket.on("call-accepted", handleCallAccepted);
+
+    return () => {
+      socket.off("call-accepted", handleCallAccepted);
+    };
+  }, [socket]);
+
   return (
     <View
       style={{

@@ -16,6 +16,7 @@ import MakeCallScreen from "./src/screens/MakeCallScreen";
 import IncomingCallScreen from "./src/screens/IncomingCallScreen";
 import OutgoingCallScreen from "./src/screens/OutgoingCallScreen";
 import CallNavigator from "./src/navigation/CallNavigator";
+import { SocketProvider } from "./src/context/SocketContext";
 
 const socket = io("http://192.168.29.162:3000", {
   transports: ["websocket"],
@@ -181,9 +182,9 @@ const App = (): JSX.Element => {
       handleRemoteCandidate(candidate);
     });
   }
-  useEffect(() => {
-    makeCall();
-  }, []);
+  // useEffect(() => {
+  //   makeCall();
+  // }, []);
 
   let remoteCandidates: RTCIceCandidate[] = [];
 
@@ -209,19 +210,21 @@ const App = (): JSX.Element => {
   }
 
   return (
-    <NavigationContainer>
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="light" backgroundColor="#000" />
-        {/* {localStream && (
+    <SocketProvider>
+      <NavigationContainer>
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="light" backgroundColor="#000" />
+          {/* {localStream && (
           <RTCView streamURL={localStream.toURL()} style={styles.video} />
         )}
         {remoteStream && (
           <RTCView streamURL={remoteStream.toURL()} style={styles.video} />
         )}
         <Text>APP</Text> */}
-        <CallNavigator />
-      </SafeAreaView>
-    </NavigationContainer>
+          <CallNavigator />
+        </SafeAreaView>
+      </NavigationContainer>
+    </SocketProvider>
   );
 };
 

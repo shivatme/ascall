@@ -1,16 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useSocket } from "../context/SocketContext";
 
 interface IncomingCallScreenProps {
-  calleeId?: string;
   route: any;
+  navigation: any;
 }
 
 function IncomingCallScreen({
-  calleeId,
   route,
+  navigation,
 }: IncomingCallScreenProps): JSX.Element {
+  const { callState, acceptCall, rejectCall } = useSocket();
+
+  const { callerId, roomId } = route.params;
+
+  function acceptCallNow() {
+    acceptCall(callerId, roomId);
+    navigation.navigate("Call", { roomId });
+  }
+
+  function rejectCallNow() {
+    rejectCall(callerId);
+  }
   return (
     <View
       style={{
@@ -34,7 +47,7 @@ function IncomingCallScreen({
             color: "#ffff",
           }}
         >
-          {calleeId} is calling..
+          {callerId} is calling..
         </Text>
       </View>
       <View
@@ -45,7 +58,7 @@ function IncomingCallScreen({
       >
         <TouchableOpacity
           onPress={() => {
-            // setType("WEBRTC_ROOM");
+            acceptCallNow();
           }}
           style={{
             backgroundColor: "green",
