@@ -29,7 +29,7 @@ function OutgoingCallScreen({
 
     const handleCallAccepted = ({ roomId }: { roomId: string }) => {
       console.log("✅ Call accepted, navigating to CallScreen");
-      navigation.navigate("Call", { roomId });
+      navigation.navigate("Call", { roomId, isInitiator: true });
     };
 
     socket.on("call-accepted", handleCallAccepted);

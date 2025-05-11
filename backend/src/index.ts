@@ -36,6 +36,8 @@ io.on("connection", (socket) => {
 
   socket.on("call-user", ({ calleeId, roomId }) => {
     console.log(`Calling user ${calleeId} in room ${roomId}`);
+    socket.join(roomId);
+
     const calleeSocket = userSockets[calleeId];
     console.log(userSockets);
 
@@ -74,7 +76,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ice-candidate", ({ candidate, roomId }) => {
-    console.log(`📡 ICE candidate from ${socket.id} to room ${roomId}`);
+    // console.log(`📡 ICE candidate from ${socket.id} to room ${roomId}`);
     socket.to(roomId).emit("ice-candidate", { candidate, from: socket.id });
   });
 

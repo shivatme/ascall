@@ -21,18 +21,11 @@ import { SocketProvider } from "./src/context/SocketContext";
 const socket = io("http://192.168.29.162:3000", {
   transports: ["websocket"],
 });
-let peerConstraints = {
-  iceServers: [
-    {
-      urls: "stun:stun.l.google.com:19302",
-    },
-  ],
-};
+
 const room = "my-room";
 const App = (): JSX.Element => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  const pc = new RTCPeerConnection(peerConstraints);
   const peerConnection = new RTCPeerConnection({
     iceServers: [
       {
