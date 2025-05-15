@@ -7,10 +7,9 @@ import React, {
   useCallback,
 } from "react";
 import { io, Socket } from "socket.io-client";
+import { BACKEND_URL } from "../api/config";
 
 // Replace with your backend URL
-const SOCKET_URL = "https://localhost:3003";
-// const SOCKET_URL = "https://ascall-api.shivat.me";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -40,7 +39,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   useEffect(() => {
-    const socket = io(SOCKET_URL);
+    const socket = io(BACKEND_URL);
     socketRef.current = socket;
 
     socket.on("connect", () => {
