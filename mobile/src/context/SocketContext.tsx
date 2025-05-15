@@ -9,7 +9,8 @@ import React, {
 import { io, Socket } from "socket.io-client";
 
 // Replace with your backend URL
-const SOCKET_URL = "http://192.168.29.162:3003";
+const SOCKET_URL = "https://localhost:3003";
+// const SOCKET_URL = "https://ascall-api.shivat.me";
 
 interface SocketContextType {
   socket: Socket | null;
