@@ -11,11 +11,26 @@ import CallNavigator from "./src/navigation/CallNavigator";
 import { SocketProvider } from "./src/context/SocketContext";
 import InternalServerErrorScreen from "./src/screens/InternalServerErrorScreen";
 import { BACKEND_URL } from "./src/api/config";
+import authStorage from "./src/auth/authStorage";
+import AuthNavigator from "./src/navigation/AuthNavigator";
+import AuthContext from "./src/auth/authContext";
 
 const App = (): JSX.Element => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading
+  const [user, setUser] = useState<any>(null);
 
+  const restoreUser = async () => {
+    try {
+      const user = await authStorage.getUser();
+      if (user) {
+        setUser(user);
+      }
+    } catch (error) {
+      console.log("Error restoring user", error);
+    }
+  };
   useEffect(() => {
+    restoreUser();
     const checkBackend = async () => {
       try {
         const res = await fetch(BACKEND_URL + "/api/ping"); // Replace <YOUR_IP>
@@ -46,12 +61,14 @@ const App = (): JSX.Element => {
 
   return (
     <SocketProvider>
-      <NavigationContainer>
-        <SafeAreaView style={styles.container}>
-          <StatusBar style="light" backgroundColor="#000" />
-          <CallNavigator />
-        </SafeAreaView>
-      </NavigationContainer>
+      <AuthContext.Provider value={{ user, setUser }}>
+        <NavigationContainer>
+          <SafeAreaView style={styles.container}>
+            <StatusBar style="light" backgroundColor="#000" />
+            {user ? <CallNavigator /> : <AuthNavigator />}
+          </SafeAreaView>
+        </NavigationContainer>
+      </AuthContext.Provider>
     </SocketProvider>
   );
 };
