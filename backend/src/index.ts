@@ -4,6 +4,9 @@ import { Server } from "socket.io";
 import path from "path";
 import { initSocket } from "./socket";
 import router from "./route";
+import authRouter from "./routes/auth.routes";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 app.use(express.json());
@@ -19,6 +22,7 @@ initSocket(io);
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use("/api", router);
+app.use("/api/auth", authRouter);
 
 const PORT = parseInt(process.env.PORT || "3003", 10);
 server.listen(PORT, "0.0.0.0", () => {
