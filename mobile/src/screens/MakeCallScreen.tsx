@@ -53,7 +53,7 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{
         flex: 1,
         backgroundColor: "#050A0E",
@@ -61,6 +61,9 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
         paddingHorizontal: 42,
       }}
     >
+      <Pressable onPress={() => navigation.navigate("Setting")}>
+        <Text style={{ color: "#fff" }}>Settings</Text>
+      </Pressable>
       <Pressable onPress={Keyboard.dismiss}>
         <>
           <View
@@ -132,7 +135,7 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
               }}
               style={{
                 height: 50,
-                backgroundColor: "#5568FE",
+                backgroundColor: "#1E88E5",
                 justifyContent: "center",
                 alignItems: "center",
                 borderRadius: 12,

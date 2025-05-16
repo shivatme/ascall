@@ -1,7 +1,7 @@
 import axios from "axios";
 import { BACKEND_URL } from "./config";
 
-const API_BASE_URL = BACKEND_URL + "/api/v1/auth";
+const API_BASE_URL = BACKEND_URL + "/api/auth";
 
 async function login(email: string, password: string) {
   const response = await axios.post(`${API_BASE_URL}/login`, {
