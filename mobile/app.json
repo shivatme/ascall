@@ -31,7 +31,8 @@
         "android.permission.WAKE_LOCK",
         "android.permission.BLUETOOTH"
       ],
-      "package": "com.shivam2827.mobile"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.ascall.preview"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,7 +45,10 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/crashlytics"
     ],
     "extra": {
       "eas": {

@@ -6,83 +6,86 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import auth, {
+  getAuth,
+  signInWithPhoneNumber,
+} from "@react-native-firebase/auth";
 import useAuth from "../auth/useAuth";
-import auth from "../api/auth";
 
 interface LoginScreenProps {
   navigation: any;
 }
 
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
-type User = any;
-
 function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
   const { login } = useAuth();
-
-  const [form, setForm] = useState<LoginFormValues>({
-    email: "",
-    password: "",
-  });
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [code, setCode] = useState("");
+  const [confirmResult, setConfirmResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const validate = ({ email, password }: LoginFormValues): string | null => {
-    if (!/\S+@\S+\.\S+/.test(email)) return "Invalid email format.";
-    if (password.length < 6) return "Password must be at least 6 characters.";
-    return null;
-  };
-
-  async function handleSubmit({ email, password }: LoginFormValues) {
-    const validationError = validate({ email, password });
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+  const handleSendCode = async () => {
     setLoading(true);
     setError(null);
     try {
-      const user: User = await auth.login(email, password);
-      login(user);
+      console.log(phoneNumber);
+      const result = await signInWithPhoneNumber(getAuth(), phoneNumber);
+      console.log(result);
+      setConfirmResult(result);
+      Alert.alert("OTP Sent", "Please check your phone.");
     } catch (err: any) {
+      setError(err.message || "Failed to send OTP.");
       console.log(err);
-      setError(err?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!confirmResult) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await confirmResult.confirm(code);
+      const user = result.user;
+      login(user); // you can send user.phoneNumber to your backend
+    } catch (err: any) {
+      setError("Invalid code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+      <Text style={styles.title}>Login with Phone</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="Enter phone number"
         placeholderTextColor="#888"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(text) => setForm({ ...form, email: text })}
+        keyboardType="phone-pad"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#888"
-        secureTextEntry
-        autoCapitalize="none"
-        value={form.password}
-        onChangeText={(text) => setForm({ ...form, password: text })}
-      />
+
+      {confirmResult && (
+        <TextInput
+          style={styles.input}
+          placeholder="Enter OTP"
+          placeholderTextColor="#888"
+          keyboardType="number-pad"
+          value={code}
+          onChangeText={setCode}
+        />
+      )}
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       <Pressable
-        onPress={() => handleSubmit(form)}
+        onPress={confirmResult ? handleVerifyCode : handleSendCode}
         style={({ pressed }) => [
           styles.button,
           pressed && styles.buttonPressed,
@@ -92,7 +95,9 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>
+            {confirmResult ? "Verify OTP" : "Send OTP"}
+          </Text>
         )}
       </Pressable>
 

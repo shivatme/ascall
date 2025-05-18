@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "279332539052",
+    "project_id": "as-call",
+    "storage_bucket": "as-call.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279332539052:android:b7eb3ee39368b0349d6d09",
+        "android_client_info": {
+          "package_name": "com.ascall.preview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJiunKcsRpM3r5iG9yZe2VCNyS95zbB-Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

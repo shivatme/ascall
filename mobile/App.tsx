@@ -14,50 +14,52 @@ import { BACKEND_URL } from "./src/api/config";
 import authStorage from "./src/auth/authStorage";
 import AuthNavigator from "./src/navigation/AuthNavigator";
 import AuthContext from "./src/auth/authContext";
+import {
+  FirebaseAuthTypes,
+  getAuth,
+  onAuthStateChanged,
+} from "@react-native-firebase/auth";
 
 const App = (): JSX.Element => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [initializing, setInitializing] = useState(true);
 
-  const restoreUser = async () => {
+  function handleAuthStateChanged(user: any) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  const checkBackend = async () => {
     try {
-      const user = await authStorage.getUser();
-      if (user) {
-        setUser(user);
-      }
-    } catch (error) {
-      console.log("Error restoring user", error);
+      const res = await fetch(BACKEND_URL + "/api/ping"); // Replace <YOUR_IP>
+      const data = await res.json();
+      setIsBackendUp(data.message === "pong");
+    } catch (err) {
+      console.error("Ping failed:", err);
+      setIsBackendUp(false);
     }
   };
-  useEffect(() => {
-    restoreUser();
-    const checkBackend = async () => {
-      try {
-        const res = await fetch(BACKEND_URL + "/api/ping"); // Replace <YOUR_IP>
-        const data = await res.json();
-        setIsBackendUp(data.message === "pong");
-      } catch (err) {
-        console.error("Ping failed:", err);
-        setIsBackendUp(false);
-      }
-    };
 
-    checkBackend();
+  useEffect(() => {
+    const subscriber = onAuthStateChanged(getAuth(), handleAuthStateChanged);
+    // checkBackend();
+    return subscriber; // unsubscribe on unmount
   }, []);
 
-  if (isBackendUp === null) {
-    // Loading spinner
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#000" />
-        <StatusBar style="auto" />
-      </View>
-    );
-  }
-
-  if (!isBackendUp) {
-    return <InternalServerErrorScreen />;
-  }
+  // if (!isBackendUp) {
+  //   return <InternalServerErrorScreen />;
+  // }
+  //   if (isBackendUp === null) {
+  //   // Loading spinner
+  //   return (
+  //     <View style={styles.centered}>
+  //       <ActivityIndicator size="large" color="#000" />
+  //       <StatusBar style="auto" />
+  //     </View>
+  //   );
+  // }
+  if (initializing) return <></>;
 
   return (
     <SocketProvider>
