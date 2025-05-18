@@ -12,18 +12,18 @@ import {
 } from "react-native";
 import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
+import useAuth from "../auth/useAuth";
 
 interface MakeCallScreenProps {
   navigation: any;
 }
 
 function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
+  const { user } = useAuth();
+  // console.log(user.);
   const [calleeId, setCalleeId] = useState<string>("");
-  const [callerId] = useState(
-    Math.floor(100000 + Math.random() * 900000).toString()
-  );
+  const [callerId] = useState(user.phone.slice(3));
   const { socket, callState } = useSocket();
-  console.log(callState);
   useEffect(() => {
     if (socket) {
       console.log("Registering user with socket ID");
@@ -92,9 +92,8 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
             >
               <Text
                 style={{
-                  fontSize: 32,
+                  fontSize: 22,
                   color: "#ffff",
-                  letterSpacing: 6,
                 }}
               >
                 {callerId}

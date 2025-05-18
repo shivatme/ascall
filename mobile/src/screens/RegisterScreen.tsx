@@ -70,7 +70,7 @@ function SignupScreen({ navigation }: SignupScreenProps): JSX.Element {
     const idToken = await firebase.auth().currentUser?.getIdToken();
     try {
       if (!idToken) throw new Error("No id token found");
-      const user = await appAuth.register(idToken, email, name);
+      const { user } = await appAuth.register(idToken, email, name);
       login(user);
     } catch (err: any) {
       setError(err?.message || "Something went wrong.");

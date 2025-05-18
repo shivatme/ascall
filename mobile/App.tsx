@@ -15,21 +15,33 @@ import authStorage from "./src/auth/authStorage";
 import AuthNavigator from "./src/navigation/AuthNavigator";
 import AuthContext from "./src/auth/authContext";
 import {
+  firebase,
   FirebaseAuthTypes,
   getAuth,
   onAuthStateChanged,
 } from "@react-native-firebase/auth";
+import appAuth from "./src/api/auth";
 
 const App = (): JSX.Element => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading
   const [user, setUser] = useState<any | null>(null);
   const [initializing, setInitializing] = useState(true);
 
-  function handleAuthStateChanged(user: any) {
-    setUser(user);
+  async function handleAuthStateChanged(user: any) {
+    await handleLogin();
     if (initializing) setInitializing(false);
   }
 
+  async function handleLogin() {
+    const idToken = await firebase.auth().currentUser?.getIdToken();
+    try {
+      if (!idToken) throw new Error("No id token found");
+      const { user: use1r } = await appAuth.login(idToken);
+      setUser(use1r);
+    } catch (err: any) {
+      console.log(err);
+    }
+  }
   const checkBackend = async () => {
     try {
       const res = await fetch(BACKEND_URL + "/api/ping"); // Replace <YOUR_IP>

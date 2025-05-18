@@ -62,7 +62,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     const idToken = await firebase.auth().currentUser?.getIdToken();
     try {
       if (!idToken) throw new Error("No id token found");
-      const user = await appAuth.login(idToken);
+      const { token, user } = await appAuth.login(idToken);
       login(user);
     } catch (err: any) {
       setError(err?.message || "Something went wrong.");
