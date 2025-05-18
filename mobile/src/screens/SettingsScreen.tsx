@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
 import useAuth from "../auth/useAuth";
+import { getAuth, signOut } from "@react-native-firebase/auth";
 
 interface SettingsScreenProps {}
 
@@ -10,10 +11,14 @@ function SettingsScreen(props: SettingsScreenProps): JSX.Element {
   const handleLogout = () => {
     Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: logout },
+      { text: "Logout", style: "destructive", onPress: LogoutFirebase },
     ]);
   };
 
+  function LogoutFirebase() {
+    signOut(getAuth());
+    logout();
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
