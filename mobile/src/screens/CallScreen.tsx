@@ -36,15 +36,21 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   const localMediaStream = useRef<MediaStream | null>(null);
   const remoteMediaStream = useRef<MediaStream | null>(null);
 
-  const { socket, sendOffer, sendAnswer, sendCandidate, endCallByRoomId } =
-    useSocket();
+  const {
+    socket,
+    sendOffer,
+    sendAnswer,
+    sendCandidate,
+    endCallByRoomId,
+    callState,
+  } = useSocket();
 
   async function makeCall() {
     if (!socket) return;
 
     try {
       const mediaStream = await mediaDevices.getUserMedia(mediaConstraints);
-
+      console.log(mediaStream);
       if (isVoiceOnly) {
         let videoTrack = mediaStream.getVideoTracks()[0];
         videoTrack.enabled = false;
@@ -71,7 +77,6 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         case "completed":
           // You can handle the call being connected here.
           // Like setting the video streams to visible.
-          console.log("connected");
           break;
       }
     });
@@ -155,9 +160,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       // Grab the remote track from the connected participant.
       remoteMediaStream.current =
         remoteMediaStream.current || new MediaStream();
-      console.log("remoteMediaStream");
       if (event.track) {
-        console.log(event.track);
         remoteMediaStream.current?.addTrack(event.track);
         setRemoteStream(remoteMediaStream.current);
       }
@@ -215,15 +218,11 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
           peerConnection.current?.addIceCandidate(candidate);
         });
         remoteCandidates.current = [];
-        console.log("Remote description set");
-
-        // processCandidates();
       } catch (err) {
         console.error("Error setting remote answer:", err);
       }
     };
     const handleCandidate = (candidate: any) => {
-      console.log(isInitiator);
       handleRemoteCandidate(candidate.candidate);
       // processCandidates();
     };
@@ -235,15 +234,19 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     socket.on("ice-candidate", handleCandidate);
   }, []);
 
+  useEffect(() => {
+    if (callState.incomingCall === null) {
+      peerConnection.current?.close();
+      navigation.navigate("MakeCall");
+    }
+  }, [callState]);
+
   const remoteCandidates = useRef<RTCIceCandidate[]>([]);
 
   function handleRemoteCandidate(iceCandidate: RTCIceCandidate) {
-    // console.log("Remote candidate received");
     try {
       iceCandidate = new RTCIceCandidate(iceCandidate);
-      console.log(iceCandidate, "ice");
       if (peerConnection.current?.remoteDescription == null) {
-        console.log("Queuing ICE candidate");
         return remoteCandidates.current?.push(iceCandidate);
       }
 
@@ -255,6 +258,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
   function endCallNow() {
     endCallByRoomId(roomId);
+    peerConnection.current?.close();
     navigation.navigate("MakeCall");
   }
 

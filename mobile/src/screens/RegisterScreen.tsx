@@ -1,106 +1,132 @@
 import React, { useState } from "react";
 import {
-  Button,
-  Pressable,
+  View,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  Pressable,
   ActivityIndicator,
   Alert,
 } from "react-native";
-
+import auth, {
+  firebase,
+  getAuth,
+  signInWithPhoneNumber,
+} from "@react-native-firebase/auth";
 import useAuth from "../auth/useAuth";
-import auth from "../api/auth";
+import appAuth from "../api/auth";
 
-interface RegisterFormValues {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface RegisterScreenProps {
+interface SignupScreenProps {
   navigation: any;
 }
 
-function RegisterScreen({ navigation }: RegisterScreenProps): JSX.Element {
+function SignupScreen({ navigation }: SignupScreenProps): JSX.Element {
   const { login } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [confirmResult, setConfirmResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<RegisterFormValues>({
-    name: "",
-    email: "",
-    password: "",
-  });
-
-  const [error, setError] = useState<string | undefined>();
-  const [loading, setLoading] = useState<boolean>(false);
-
-  const validate = ({
-    name,
-    email,
-    password,
-  }: RegisterFormValues): string | null => {
-    if (!name.trim()) return "Name is required.";
-    if (!/\S+@\S+\.\S+/.test(email)) return "Invalid email format.";
-    if (password.length < 6) return "Password must be at least 6 characters.";
-    return null;
-  };
-
-  const handleSubmit = async () => {
-    setError(undefined);
-
-    const validationError = validate(form);
-    if (validationError) {
-      setError(validationError);
+  const handleSendCode = async () => {
+    if (!phoneNumber) {
+      setError("Phone number is required.");
       return;
     }
-
     setLoading(true);
+    setError(null);
     try {
-      const user = await auth.register(form.email, form.password, form.name);
+      const result = await signInWithPhoneNumber(getAuth(), phoneNumber);
+      setConfirmResult(result);
+      Alert.alert("OTP Sent", "Please check your phone.");
+    } catch (err: any) {
+      setError(err.message || "Failed to send OTP.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!confirmResult) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await confirmResult.confirm(code);
+      const user = result.user;
+
+      // login(user); // Your login logic
+
+      handleSignup();
+    } catch (err: any) {
+      setError("Invalid code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  async function handleSignup() {
+    const idToken = await firebase.auth().currentUser?.getIdToken();
+    try {
+      if (!idToken) throw new Error("No id token found");
+      const user = await appAuth.register(idToken, email, name);
       login(user);
     } catch (err: any) {
       setError(err?.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.title}>Sign Up</Text>
+
+      {!confirmResult && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Name (optional)"
+            placeholderTextColor="#888"
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email (optional)"
+            placeholderTextColor="#888"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </>
+      )}
 
       <TextInput
         style={styles.input}
-        placeholder="Name"
+        placeholder="Enter phone number"
         placeholderTextColor="#888"
-        autoCapitalize="words"
-        value={form.name}
-        onChangeText={(text) => setForm({ ...form, name: text })}
+        keyboardType="phone-pad"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#888"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={form.email}
-        onChangeText={(text) => setForm({ ...form, email: text })}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#888"
-        secureTextEntry
-        autoCapitalize="none"
-        value={form.password}
-        onChangeText={(text) => setForm({ ...form, password: text })}
-      />
+
+      {confirmResult && (
+        <TextInput
+          style={styles.input}
+          placeholder="Enter OTP"
+          placeholderTextColor="#888"
+          keyboardType="number-pad"
+          value={code}
+          onChangeText={setCode}
+        />
+      )}
 
       {error && <Text style={styles.error}>{error}</Text>}
 
       <Pressable
-        onPress={handleSubmit}
+        onPress={confirmResult ? handleVerifyCode : handleSendCode}
         style={({ pressed }) => [
           styles.button,
           pressed && styles.buttonPressed,
@@ -110,11 +136,13 @@ function RegisterScreen({ navigation }: RegisterScreenProps): JSX.Element {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={styles.buttonText}>
+            {confirmResult ? "Verify OTP" : "Send OTP"}
+          </Text>
         )}
       </Pressable>
 
-      <Pressable onPress={() => navigation.goBack()}>
+      <Pressable onPress={() => navigation.navigate("Login")}>
         <Text style={styles.link}>Already have an account? Login</Text>
       </Pressable>
     </View>
@@ -132,8 +160,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "600",
     marginBottom: 20,
-    textAlign: "center",
     color: "#fff",
+    textAlign: "center",
   },
   input: {
     height: 50,
@@ -172,4 +200,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen;
+export default SignupScreen;

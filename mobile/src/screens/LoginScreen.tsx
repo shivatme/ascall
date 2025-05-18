@@ -9,10 +9,12 @@ import {
   Alert,
 } from "react-native";
 import auth, {
+  firebase,
   getAuth,
   signInWithPhoneNumber,
 } from "@react-native-firebase/auth";
 import useAuth from "../auth/useAuth";
+import appAuth from "../api/auth";
 
 interface LoginScreenProps {
   navigation: any;
@@ -30,14 +32,11 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      console.log(phoneNumber);
       const result = await signInWithPhoneNumber(getAuth(), phoneNumber);
-      console.log(result);
       setConfirmResult(result);
       Alert.alert("OTP Sent", "Please check your phone.");
     } catch (err: any) {
       setError(err.message || "Failed to send OTP.");
-      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -50,7 +49,8 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     try {
       const result = await confirmResult.confirm(code);
       const user = result.user;
-      login(user); // you can send user.phoneNumber to your backend
+      console.log(await firebase.auth().currentUser?.getIdToken());
+      handleLogin();
     } catch (err: any) {
       setError("Invalid code. Please try again.");
     } finally {
@@ -58,6 +58,18 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     }
   };
 
+  async function handleLogin() {
+    const idToken = await firebase.auth().currentUser?.getIdToken();
+    try {
+      if (!idToken) throw new Error("No id token found");
+      const user = await appAuth.login(idToken);
+      login(user);
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login with Phone</Text>
