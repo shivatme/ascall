@@ -9,7 +9,8 @@ import {
   RTCSessionDescription,
 } from "react-native-webrtc";
 import { useSocket } from "../context/SocketContext";
-import { SimpleLineIcons } from "@expo/vector-icons";
+import { FontAwesome, SimpleLineIcons } from "@expo/vector-icons";
+import { useWebRTC } from "../context/WebRTCContext";
 
 interface CallScreenProps {
   route: any;
@@ -28,14 +29,18 @@ let isVoiceOnly = false;
 
 function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   const { roomId, isInitiator } = route.params;
-
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-
-  const peerConnection = useRef<RTCPeerConnection | null>(null);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const localMediaStream = useRef<MediaStream | null>(null);
   const remoteMediaStream = useRef<MediaStream | null>(null);
-
+  const remoteCandidates = useRef<RTCIceCandidate[]>([]);
+  const {
+    peerConnection,
+    localStream,
+    setLocalStream,
+    remoteStream,
+    setRemoteStream,
+  } = useWebRTC();
   const {
     socket,
     sendOffer,
@@ -50,7 +55,6 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
     try {
       const mediaStream = await mediaDevices.getUserMedia(mediaConstraints);
-      console.log(mediaStream);
       if (isVoiceOnly) {
         let videoTrack = mediaStream.getVideoTracks()[0];
         videoTrack.enabled = false;
@@ -135,7 +139,10 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       // socket.emit("ice-candidate", event.candidate, roomId);
     });
   }
+
   async function setupLocalStreamOnly() {
+    if (localMediaStream.current) return;
+
     const mediaStream = await mediaDevices.getUserMedia(mediaConstraints);
     if (isVoiceOnly) {
       let videoTrack = mediaStream.getVideoTracks()[0];
@@ -167,7 +174,136 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     });
   }
 
+  function handleRemoteCandidate(iceCandidate: RTCIceCandidate) {
+    try {
+      iceCandidate = new RTCIceCandidate(iceCandidate);
+      if (peerConnection.current?.remoteDescription == null) {
+        return remoteCandidates.current?.push(iceCandidate);
+      }
+
+      return peerConnection.current?.addIceCandidate(iceCandidate);
+    } catch (error) {
+      console.log(error, "icers");
+    }
+  }
+
+  function endCallNow() {
+    endCallByRoomId(roomId);
+
+    localMediaStream.current?.getTracks().forEach((track) => track.stop());
+    localMediaStream.current = null;
+    setLocalStream(null);
+
+    // remoteMediaStream.current = null;
+    // setRemoteStream(null);
+
+    peerConnection.current?.close();
+    peerConnection.current = null;
+
+    navigation.navigate("MakeCall");
+  }
+
+  const toggleAudio = () => {
+    if (localMediaStream.current) {
+      const audioTracks = localMediaStream.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const audioTrack = audioTracks[0];
+        const isEnabled = audioTrack.enabled;
+        audioTrack.enabled = !isEnabled;
+        setIsAudioEnabled(!isEnabled);
+
+        if (peerConnection.current) {
+          peerConnection.current.getSenders().forEach((sender) => {
+            if (sender.track?.kind === "audio") {
+              sender.track.enabled = !isEnabled;
+            }
+          });
+        }
+      }
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localMediaStream.current) {
+      localMediaStream.current.getVideoTracks().forEach((track) => {
+        track.enabled = !track.enabled;
+      });
+      setIsVideoEnabled((prev) => !prev);
+    }
+  };
+
+  const handleOffer = async (incoming: any) => {
+    try {
+      if (incoming.offer === null) return;
+
+      const rtcOffer = new RTCSessionDescription(incoming.offer);
+
+      if (
+        peerConnection.current?.signalingState !== "stable" &&
+        peerConnection.current?.signalingState !== "have-remote-offer"
+      ) {
+        console.warn(
+          "Skipping offer: not in stable state",
+          peerConnection.current?.signalingState
+        );
+        return;
+      }
+
+      await peerConnection.current?.setRemoteDescription(rtcOffer);
+
+      const answer = await peerConnection.current?.createAnswer();
+      await peerConnection.current?.setLocalDescription(answer);
+      sendAnswer(answer, roomId);
+    } catch (err) {
+      console.log("Error handling offer:", err);
+    }
+  };
+
+  const handleAnswer = async (answerDescription: any) => {
+    const answer = answerDescription.answer;
+
+    try {
+      if (!peerConnection.current) return;
+
+      const signalingState = peerConnection.current.signalingState;
+      console.log("Signaling state before setting answer:", signalingState);
+
+      if (signalingState !== "have-local-offer") {
+        console.warn(
+          "Skipping setRemoteDescription(answer): not in 'have-local-offer'"
+        );
+        return;
+      }
+
+      if (peerConnection.current.remoteDescription) {
+        console.warn("Remote description already set. Skipping.");
+        return;
+      }
+
+      const remoteDesc = new RTCSessionDescription(answer);
+      await peerConnection.current.setRemoteDescription(remoteDesc);
+
+      // Now add any stored ICE candidates
+      remoteCandidates.current.forEach((candidate) => {
+        peerConnection.current?.addIceCandidate(candidate);
+      });
+      remoteCandidates.current = [];
+    } catch (err) {
+      console.error("Error setting remote answer:", err);
+    }
+  };
+
+  console.log("calls");
+  const handleCandidate = (candidate: any) => {
+    handleRemoteCandidate(candidate.candidate);
+    // processCandidates();
+  };
+
+  console.log("calls");
+
   useEffect(() => {
+    if (peerConnection.current) return;
+
     peerConnection.current = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -191,76 +327,38 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   useEffect(() => {
     if (!socket) return;
 
-    const handleOffer = async (incoming: any) => {
-      try {
-        if (incoming.offer === null) return;
-        const rtcOffer = new RTCSessionDescription(incoming.offer);
-        await peerConnection.current?.setRemoteDescription(rtcOffer);
-        remoteCandidates.current.forEach((candidate) => {
-          peerConnection.current?.addIceCandidate(candidate);
-        });
-        remoteCandidates.current = [];
+    const onAnswer = (data: any) => handleAnswer(data);
+    const onOffer = (data: any) => handleOffer(data);
+    const onCandidate = (data: any) => handleCandidate(data);
 
-        const answer = await peerConnection.current?.createAnswer();
-        await peerConnection.current?.setLocalDescription(answer);
-        sendAnswer(answer, roomId);
-      } catch (err) {
-        console.log("Error handling offer:", err);
-      }
-    };
-
-    const handleAnswer = async (answerDescription: any) => {
-      const answer = answerDescription.answer;
-      try {
-        const answerDescription1 = new RTCSessionDescription(answer);
-        await peerConnection.current?.setRemoteDescription(answerDescription1);
-        remoteCandidates.current.forEach((candidate) => {
-          peerConnection.current?.addIceCandidate(candidate);
-        });
-        remoteCandidates.current = [];
-      } catch (err) {
-        console.error("Error setting remote answer:", err);
-      }
-    };
-    const handleCandidate = (candidate: any) => {
-      handleRemoteCandidate(candidate.candidate);
-      // processCandidates();
-    };
     if (isInitiator) {
-      socket.on("answer", (data) => {
-        handleAnswer(data);
-      });
-    } else socket.on("offer", handleOffer);
-    socket.on("ice-candidate", handleCandidate);
+      socket.on("answer", onAnswer);
+    } else {
+      socket.on("offer", onOffer);
+    }
+    socket.on("ice-candidate", onCandidate);
+
+    return () => {
+      socket.off("offer", onOffer);
+      socket.off("answer", onAnswer);
+      socket.off("ice-candidate", onCandidate);
+    };
   }, []);
 
   useEffect(() => {
-    if (callState.incomingCall === null) {
+    if (callState.state === null) {
+      localMediaStream.current?.getTracks().forEach((track) => track.stop());
+      localMediaStream.current = null;
+      setLocalStream(null);
+
+      remoteMediaStream.current = null;
+      // setRemoteStream(null);
+
       peerConnection.current?.close();
+      peerConnection.current = null;
       navigation.navigate("MakeCall");
     }
   }, [callState]);
-
-  const remoteCandidates = useRef<RTCIceCandidate[]>([]);
-
-  function handleRemoteCandidate(iceCandidate: RTCIceCandidate) {
-    try {
-      iceCandidate = new RTCIceCandidate(iceCandidate);
-      if (peerConnection.current?.remoteDescription == null) {
-        return remoteCandidates.current?.push(iceCandidate);
-      }
-
-      return peerConnection.current?.addIceCandidate(iceCandidate);
-    } catch (error) {
-      console.log(error, "icers");
-    }
-  }
-
-  function endCallNow() {
-    endCallByRoomId(roomId);
-    peerConnection.current?.close();
-    navigation.navigate("MakeCall");
-  }
 
   return (
     <View style={styles.container}>
@@ -272,7 +370,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         />
       )}
 
-      {localStream && remoteStream && (
+      {isVideoEnabled && localStream && remoteMediaStream ? (
         <View style={styles.localPreviewWrapper}>
           <RTCView
             streamURL={localStream.toURL()}
@@ -281,16 +379,60 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
             mirror={true}
           />
         </View>
+      ) : (
+        <View style={styles.localPreviewWrapper}>
+          <View style={[styles.localVideo, styles.videoOffPlaceholder]}>
+            <Text style={styles.videoOffText}>Video Off</Text>
+          </View>
+        </View>
       )}
+
       <View
         style={{
-          justifyContent: "center",
+          justifyContent: "space-around",
           alignItems: "center",
           position: "absolute",
           bottom: 20,
           alignSelf: "center",
+          flexDirection: "row",
+          width: "100%",
         }}
       >
+        <TouchableOpacity
+          onPress={toggleAudio}
+          style={{
+            backgroundColor: isAudioEnabled ? "#4CAF50" : "#A9A9A9",
+            borderRadius: 30,
+            height: 60,
+            width: 60,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome
+            name={isAudioEnabled ? "microphone" : "microphone-slash"}
+            size={28}
+            color="white"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={toggleVideo}
+          style={{
+            backgroundColor: isVideoEnabled ? "#4CAF50" : "#A9A9A9",
+            borderRadius: 30,
+            height: 60,
+            width: 60,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <SimpleLineIcons
+            name={isVideoEnabled ? "camrecorder" : "camrecorder"}
+            size={28}
+            color="white"
+          />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => {
             endCallNow();
@@ -321,9 +463,21 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  videoOffPlaceholder: {
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  videoOffText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
   localPreviewWrapper: {
     position: "absolute",
-    bottom: 20,
+    bottom: 100,
     right: 20,
     width: 100,
     height: 150,

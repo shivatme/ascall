@@ -21,7 +21,7 @@ interface MakeCallScreenProps {
 function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
   const { user } = useAuth();
   // console.log(user.);
-  const [calleeId, setCalleeId] = useState<string>("");
+  const [calleeId, setCalleeId] = useState<string>("9320594759");
   const [callerId] = useState(user.phone?.slice(3));
   const { socket, callState } = useSocket();
   useEffect(() => {
@@ -42,8 +42,8 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
   }
 
   useEffect(() => {
-    if (callState.incomingCall) {
-      console.log("Incoming call", callState.incomingCall);
+    if (callState.state === "incomingCall" && callState.incomingCall) {
+      // console.log("Incoming call", callState.incomingCall);
       navigation.navigate("IncomingCall", {
         callerId: callState.incomingCall.from,
         roomId: callState.incomingCall.roomId,

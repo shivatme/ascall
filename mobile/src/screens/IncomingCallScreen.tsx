@@ -12,12 +12,14 @@ function IncomingCallScreen({
   route,
   navigation,
 }: IncomingCallScreenProps): JSX.Element {
-  const { callState, acceptCall, rejectCall } = useSocket();
+  const { callState, acceptCall, rejectCall, setCallState } = useSocket();
 
   const { callerId, roomId } = route.params;
 
   function acceptCallNow() {
     acceptCall(callerId, roomId);
+    setCallState({ state: "callAccepted" });
+
     navigation.navigate("Call", { roomId });
   }
 
@@ -27,8 +29,8 @@ function IncomingCallScreen({
   }
 
   useEffect(() => {
-    if (callState.incomingCall === null) {
-      console.log("Call ended");
+    if (callState.state === null) {
+      // console.log("Call ended");
       navigation.navigate("MakeCall");
     }
   }, [callState]);

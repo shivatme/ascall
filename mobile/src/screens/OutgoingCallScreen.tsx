@@ -12,7 +12,7 @@ function OutgoingCallScreen({
   route,
   navigation,
 }: OutgoingCallScreenProps): JSX.Element {
-  const { callUser, endCall, socket } = useSocket();
+  const { callUser, endCall, socket, setCallState } = useSocket();
 
   const { calleeId, roomId } = route.params;
 
@@ -34,9 +34,11 @@ function OutgoingCallScreen({
 
     const handleCallAccepted = ({ roomId }: { roomId: string }) => {
       console.log("✅ Call accepted, navigating to CallScreen");
+      setCallState({ state: "callAccepted" });
       navigation.navigate("Call", { roomId, isInitiator: true });
     };
     const handleCallRejected = ({ roomId }: { roomId: string }) => {
+      setCallState({ state: null });
       console.log("✅ Call rejected, navigating to MakeCallScreen");
       navigation.navigate("MakeCall");
     };

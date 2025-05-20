@@ -15,8 +15,16 @@ interface SocketContextType {
   socket: Socket | null;
   socketInitialized: boolean;
   callState: {
-    incomingCall?: { from: string; roomId: string } | null;
+    state:
+      | "incomingCall"
+      | "callEnded"
+      | "callRejected"
+      | "callDisconnected"
+      | "callAccepted"
+      | null;
+    incomingCall?: { from: string; roomId: string } | null | undefined;
   };
+  setCallState: (state: SocketContextType["callState"]) => void;
   sendOffer: (offer: any, roomId: string) => void;
   sendAnswer: (answer: any, roomId: string) => void;
   sendCandidate: (candidate: any, roomId: string) => void;
@@ -34,9 +42,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const socketRef = useRef<Socket | null>(null);
   const [socketInitialized, setSocketInitialized] = useState(false);
-  const [callState, setCallState] = useState<SocketContextType["callState"]>(
-    {}
-  );
+  const [callState, setCallState] = useState<SocketContextType["callState"]>({
+    state: null,
+  });
 
   useEffect(() => {
     const socket = io(BACKEND_URL);
@@ -49,15 +57,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     socket.on("incoming-call", ({ from, roomId }) => {
       console.log("📲 Incoming call from", from);
-      setCallState({ incomingCall: { from, roomId } });
+      setCallState({ state: "incomingCall", incomingCall: { from, roomId } });
     });
     socket.on("call-rejected", ({ from }) => {
       console.log("📲 Rejected call ");
-      setCallState({ incomingCall: null });
+      setCallState({ state: null });
     });
     socket.on("call-ended", ({ from }) => {
       console.log("📲 Call ended ");
-      setCallState({ incomingCall: null });
+      setCallState({ state: null });
     });
 
     socket.on("disconnect", () => {
@@ -85,6 +93,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket: socketRef.current,
     socketInitialized,
     callState,
+    setCallState, // <-- correct this line
     sendOffer: (offer, roomId) => emit("offer", { offer, roomId }),
     sendAnswer: (answer, roomId) => emit("answer", { answer, roomId }),
     sendCandidate: (candidate, roomId) =>
@@ -94,16 +103,16 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     rejectCall: (callerId) => {
       console.log("rejectCall", callerId);
       emit("reject-call", { callerId });
-      setCallState({ incomingCall: null });
+      setCallState({ state: null });
     },
     endCall: (calleeId) => {
       emit("end-call", { calleeId });
-      console.log("endCall", calleeId);
-      setCallState({ incomingCall: null });
+      // console.log("endCall", calleeId);
+      setCallState({ state: null });
     },
     endCallByRoomId: (roomId) => {
       emit("end-call-room", { roomId });
-      setCallState({ incomingCall: null });
+      setCallState({ state: null });
     },
   };
 

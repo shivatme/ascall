@@ -21,6 +21,7 @@ import {
   onAuthStateChanged,
 } from "@react-native-firebase/auth";
 import appAuth from "./src/api/auth";
+import { WebRTCProvider } from "./src/context/WebRTCContext";
 
 const App = (): JSX.Element => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading
@@ -76,14 +77,16 @@ const App = (): JSX.Element => {
 
   return (
     <SocketProvider>
-      <AuthContext.Provider value={{ user, setUser }}>
-        <NavigationContainer>
-          <SafeAreaView style={styles.container}>
-            <StatusBar style="light" backgroundColor="#000" />
-            {user ? <CallNavigator /> : <AuthNavigator />}
-          </SafeAreaView>
-        </NavigationContainer>
-      </AuthContext.Provider>
+      <WebRTCProvider>
+        <AuthContext.Provider value={{ user, setUser }}>
+          <NavigationContainer>
+            <SafeAreaView style={styles.container}>
+              <StatusBar style="light" backgroundColor="#000" />
+              {user ? <CallNavigator /> : <AuthNavigator />}
+            </SafeAreaView>
+          </NavigationContainer>
+        </AuthContext.Provider>
+      </WebRTCProvider>
     </SocketProvider>
   );
 };
