@@ -27,12 +27,19 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
   const [confirmResult, setConfirmResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [codeSubmitted, setCodeSubmitted] = useState(false);
 
   const handleSendCode = async () => {
+    if (!phoneNumber) {
+      setError("Phone number is required.");
+      return;
+    }
+    const fullPhoneNumber = `+91${phoneNumber}`;
+
     setLoading(true);
     setError(null);
     try {
-      const result = await signInWithPhoneNumber(getAuth(), phoneNumber);
+      const result = await signInWithPhoneNumber(getAuth(), fullPhoneNumber);
       setConfirmResult(result);
       Alert.alert("OTP Sent", "Please check your phone.");
     } catch (err: any) {
@@ -46,6 +53,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     if (!confirmResult) return;
     setLoading(true);
     setError(null);
+    setCodeSubmitted(true);
     try {
       const result = await confirmResult.confirm(code);
       const user = result.user;
@@ -53,6 +61,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
       handleLogin();
     } catch (err: any) {
       setError("Invalid code. Please try again.");
+      setCodeSubmitted(false);
     } finally {
       setLoading(false);
     }
@@ -70,32 +79,44 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
       setLoading(false);
     }
   }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login with Phone</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter phone number"
-        placeholderTextColor="#888"
-        keyboardType="phone-pad"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-      />
-
-      {confirmResult && (
+      {/* Phone input with +91 */}
+      <View style={styles.phoneRow}>
+        <Text style={styles.phonePrefix}>+91</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter OTP"
+          placeholder="Enter phone number"
           placeholderTextColor="#888"
-          keyboardType="number-pad"
-          value={code}
-          onChangeText={setCode}
+          keyboardType="phone-pad"
+          value={phoneNumber}
+          onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ""))}
+          maxLength={10}
         />
+      </View>
+
+      {/* OTP Input */}
+      {confirmResult && (
+        <View style={styles.phoneRow}>
+          <TextInput
+            style={[styles.input, codeSubmitted && styles.disabledInput]}
+            placeholder="Enter OTP"
+            placeholderTextColor="#888"
+            keyboardType="number-pad"
+            value={code}
+            onChangeText={(text) => !codeSubmitted && setCode(text)}
+            editable={!codeSubmitted}
+          />
+        </View>
       )}
 
+      {/* Error Message */}
       {error && <Text style={styles.error}>{error}</Text>}
 
+      {/* Send or Verify Button */}
       <Pressable
         onPress={confirmResult ? handleVerifyCode : handleSendCode}
         style={({ pressed }) => [
@@ -113,6 +134,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
         )}
       </Pressable>
 
+      {/* Navigation */}
       <Pressable onPress={() => navigation.navigate("Register")}>
         <Text style={styles.link}>Don't have an account? Sign Up</Text>
       </Pressable>
@@ -134,15 +156,30 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "center",
   },
-  input: {
-    height: 50,
-    borderColor: "#333",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 15,
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 15,
-    color: "#fff",
     backgroundColor: "#1E1E1E",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#333",
+    paddingHorizontal: 10,
+  },
+  phonePrefix: {
+    color: "#fff",
+    fontSize: 16,
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    height: 50,
+    color: "#fff",
+    backgroundColor: "transparent",
+    fontSize: 16,
+  },
+  disabledInput: {
+    opacity: 0.5,
   },
   button: {
     backgroundColor: "#1E88E5",

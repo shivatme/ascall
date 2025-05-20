@@ -22,7 +22,7 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
   const { user } = useAuth();
   // console.log(user.);
   const [calleeId, setCalleeId] = useState<string>("");
-  const [callerId] = useState(user.phone.slice(3));
+  const [callerId] = useState(user.phone?.slice(3));
   const { socket, callState } = useSocket();
   useEffect(() => {
     if (socket) {

@@ -33,7 +33,8 @@ const App = (): JSX.Element => {
   }
 
   async function handleLogin() {
-    const idToken = await firebase.auth().currentUser?.getIdToken();
+    const auth = getAuth();
+    const idToken = await auth.currentUser?.getIdToken();
     try {
       if (!idToken) throw new Error("No id token found");
       const { user: use1r } = await appAuth.login(idToken);
