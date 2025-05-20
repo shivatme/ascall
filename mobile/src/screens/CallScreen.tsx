@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Pressable,
+} from "react-native";
 import {
   RTCPeerConnection,
   RTCView,
@@ -225,6 +231,9 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   };
 
   const toggleVideo = () => {
+    if (isVideoEnabled) {
+      setFullScreenSelf(false);
+    }
     if (localMediaStream.current) {
       localMediaStream.current.getVideoTracks().forEach((track) => {
         track.enabled = !track.enabled;
@@ -416,29 +425,47 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       console.error("Error switching camera:", err);
     }
   }
+
+  const [fullScreenSelf, setFullScreenSelf] = useState(false);
   return (
     <View style={styles.container}>
-      {remoteStream && (
+      {remoteStream && localStream ? (
         <View>
           <RTCView
-            streamURL={remoteStream.toURL()}
+            streamURL={
+              fullScreenSelf ? localStream.toURL() : remoteStream.toURL()
+            }
             style={styles.remoteVideo}
             objectFit="cover"
             zOrder={0}
           />
         </View>
+      ) : (
+        <View>
+          <View style={[styles.localVideo, styles.videoOffPlaceholder]}>
+            <Text style={styles.videoOffText}>Video Off</Text>
+          </View>
+        </View>
       )}
 
       {isVideoEnabled && localStream && remoteStream ? (
-        <View style={styles.localPreviewWrapper} key={isFrontCamera.toString()}>
+        <Pressable
+          onPress={() => {
+            setFullScreenSelf(!fullScreenSelf);
+          }}
+          style={styles.localPreviewWrapper}
+          key={isFrontCamera.toString()}
+        >
           <RTCView
-            streamURL={localStream.toURL()}
+            streamURL={
+              fullScreenSelf ? remoteStream.toURL() : localStream.toURL()
+            }
             style={styles.localVideo}
             objectFit="cover"
             mirror={true}
             zOrder={8}
           />
-        </View>
+        </Pressable>
       ) : (
         <View style={styles.localPreviewWrapper}>
           <View style={[styles.localVideo, styles.videoOffPlaceholder]}>
