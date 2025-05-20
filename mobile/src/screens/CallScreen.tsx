@@ -9,7 +9,7 @@ import {
   RTCSessionDescription,
 } from "react-native-webrtc";
 import { useSocket } from "../context/SocketContext";
-import { FontAwesome, SimpleLineIcons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useWebRTC } from "../context/WebRTCContext";
 
 interface CallScreenProps {
@@ -29,6 +29,7 @@ let isVoiceOnly = false;
 
 function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   const { roomId, isInitiator } = route.params;
+  const [isFrontCamera, setIsFrontCamera] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const localMediaStream = useRef<MediaStream | null>(null);
@@ -293,13 +294,10 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     }
   };
 
-  console.log("calls");
   const handleCandidate = (candidate: any) => {
     handleRemoteCandidate(candidate.candidate);
     // processCandidates();
   };
-
-  console.log("calls");
 
   useEffect(() => {
     if (peerConnection.current) return;
@@ -360,23 +358,85 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     }
   }, [callState]);
 
+  async function switchCamera() {
+    try {
+      const devices =
+        (await mediaDevices.enumerateDevices()) as MediaDeviceInfo[];
+
+      // Count video input devices (cameras)
+      const videoInputDevices = devices.filter(
+        (device) => device.kind === "videoinput"
+      );
+
+      if (videoInputDevices.length < 2) {
+        console.log("Only one camera available, can't switch");
+        return;
+      }
+
+      // Toggle camera facing mode
+      const newFacingMode = isFrontCamera ? "environment" : "user";
+
+      // Get new stream with switched camera
+      const newStream = await mediaDevices.getUserMedia({
+        audio: true,
+        video: {
+          frameRate: 30,
+          facingMode: newFacingMode,
+        },
+      });
+
+      // Replace the video track in local stream and peer connection
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      const oldVideoTrack = localMediaStream.current?.getVideoTracks()[0];
+
+      if (oldVideoTrack && peerConnection.current) {
+        // Replace track in peer connection sender
+        const sender = peerConnection.current
+          .getSenders()
+          .find((s) => s.track?.kind === "video");
+
+        sender?.replaceTrack(newVideoTrack);
+      }
+
+      // Stop old video track
+      oldVideoTrack?.stop();
+
+      // Update local stream with new video track
+      if (localMediaStream.current && oldVideoTrack) {
+        localMediaStream.current.removeTrack(oldVideoTrack);
+        localMediaStream.current.addTrack(newVideoTrack);
+        setLocalStream(localMediaStream.current);
+      } else {
+        setLocalStream(newStream);
+        localMediaStream.current = newStream;
+      }
+
+      setIsFrontCamera(!isFrontCamera);
+    } catch (err) {
+      console.error("Error switching camera:", err);
+    }
+  }
   return (
     <View style={styles.container}>
       {remoteStream && (
-        <RTCView
-          streamURL={remoteStream.toURL()}
-          style={styles.remoteVideo}
-          objectFit="cover"
-        />
+        <View>
+          <RTCView
+            streamURL={remoteStream.toURL()}
+            style={styles.remoteVideo}
+            objectFit="cover"
+            zOrder={0}
+          />
+        </View>
       )}
 
-      {isVideoEnabled && localStream && remoteMediaStream ? (
-        <View style={styles.localPreviewWrapper}>
+      {isVideoEnabled && localStream && remoteStream ? (
+        <View style={styles.localPreviewWrapper} key={isFrontCamera.toString()}>
           <RTCView
             streamURL={localStream.toURL()}
             style={styles.localVideo}
             objectFit="cover"
             mirror={true}
+            zOrder={8}
           />
         </View>
       ) : (
@@ -398,6 +458,19 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
           width: "100%",
         }}
       >
+        <TouchableOpacity
+          onPress={switchCamera}
+          style={{
+            backgroundColor: "#414141",
+            borderRadius: 30,
+            height: 60,
+            width: 60,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Ionicons name={"camera-reverse-sharp"} size={28} color="white" />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={toggleAudio}
           style={{
@@ -462,6 +535,7 @@ const styles = StyleSheet.create({
   remoteVideo: {
     width: "100%",
     height: "100%",
+    zIndex: 0,
   },
   videoOffPlaceholder: {
     backgroundColor: "#000",
@@ -487,10 +561,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#fff",
     elevation: 10,
+    zIndex: 10,
   },
   localVideo: {
     flex: 1,
     backgroundColor: "black",
+    zIndex: 11,
   },
 });
 
