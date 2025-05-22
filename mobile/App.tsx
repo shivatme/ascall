@@ -22,6 +22,13 @@ import {
 } from "@react-native-firebase/auth";
 import appAuth from "./src/api/auth";
 import { WebRTCProvider } from "./src/context/WebRTCContext";
+// index.js
+import messaging from "@react-native-firebase/messaging";
+
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  console.log("🔕 Background message:", remoteMessage);
+  // Show call UI or store notification locally
+});
 
 const App = (): JSX.Element => {
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading

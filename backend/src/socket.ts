@@ -14,16 +14,24 @@ export const initSocket = (io: Server) => {
       console.log(`User ${userId} registered with socket ID ${socket.id}`);
     });
 
-    socket.on("call-user", ({ calleeId, roomId }) => {
+    socket.on("call-user", async ({ calleeId, roomId, callerId }) => {
       console.log(`Calling user ${calleeId} in room ${roomId}`);
       socket.join(roomId);
 
       const calleeSocket = userSockets[calleeId];
-      console.log(userSockets);
 
       if (calleeSocket) {
-        io.to(calleeSocket).emit("incoming-call", { from: socket.id, roomId });
+        io.to(calleeSocket).emit("incoming-call", {
+          from: socket.id,
+          roomId,
+        });
         console.log(`Calling user ${calleeSocket} in room ${roomId}`);
+        await sendCallPushNotification(calleeId, callerId, roomId);
+      } else {
+        console.log(`User ${calleeId} is offline. Triggering push.`);
+
+        // 🟡 Trigger a fallback push notification via HTTP call or inline logic
+        await sendCallPushNotification(calleeId, callerId, roomId);
       }
     });
 
@@ -80,3 +88,63 @@ export const initSocket = (io: Server) => {
     });
   });
 };
+import { PrismaClient } from "@prisma/client";
+import admin from "./config/firebase";
+
+const prisma = new PrismaClient();
+
+async function sendCallPushNotification(
+  calleeId: string,
+  callerId: string,
+  roomId: string
+) {
+  console.log(calleeId, "callerId");
+  const user = await prisma.user.findUnique({
+    where: { phone: `+91${calleeId}` },
+  });
+  if (user) {
+    const fcmToken = await prisma.fcmToken.findFirst({
+      where: { userId: user.id },
+    });
+
+    console.log(calleeId, fcmToken);
+    if (fcmToken) {
+      const res = await admin.messaging().send({
+        token: fcmToken.token,
+        notification: {
+          title: "Incoming Call",
+          body: "You have an incoming video call.",
+        },
+        data: {
+          type: "CALL",
+          roomId: "abc123",
+        },
+      });
+      console.log(res);
+    }
+  }
+
+  // if (!deviceToken) return;
+
+  // const message = {
+  //   to: deviceToken,
+  //   data: {
+  //     type: "INCOMING_CALL",
+  //     callerId,
+  //     roomId,
+  //   },
+  //   notification: {
+  //     title: "Incoming Call",
+  //     body: "You have a new call",
+  //   },
+  // };
+
+  // await fetch('https://fcm.googleapis.com/fcm/send', {
+  //   method: 'POST',
+  //   headers: {
+  //     'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
+  //     'Content-Type': 'application/json',
+  //   },
+  //   body: JSON.stringify(message),
+  // });
+}

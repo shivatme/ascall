@@ -5,6 +5,8 @@ import path from "path";
 import { initSocket } from "./socket";
 import router from "./route";
 import authRouter from "./routes/auth.routes";
+import notificationRouter from "./routes/notification.routes";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -23,6 +25,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 app.use("/api", router);
 app.use("/api/auth", authRouter);
+app.use("/api/notification", notificationRouter);
 
 const PORT = parseInt(process.env.PORT || "3003", 10);
 server.listen(PORT, "0.0.0.0", () => {

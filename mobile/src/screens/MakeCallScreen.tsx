@@ -13,6 +13,7 @@ import {
 import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
 import useAuth from "../auth/useAuth";
+import { initializeNotifications } from "../services/NotificationService";
 
 interface MakeCallScreenProps {
   navigation: any;
@@ -50,6 +51,12 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
       });
     }
   }, [callState]);
+
+  useEffect(() => {
+    if (callerId) {
+      initializeNotifications(callerId);
+    }
+  }, [callerId]);
 
   return (
     <KeyboardAvoidingView
