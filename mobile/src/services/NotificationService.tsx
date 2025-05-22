@@ -6,28 +6,7 @@ import messaging, {
 } from "@react-native-firebase/messaging";
 import { Alert, Platform, PermissionsAndroid } from "react-native";
 import { BACKEND_URL } from "../api/config";
-import RNCallKeep from "react-native-callkeep";
-
-const options = {
-  ios: {
-    appName: "My app name",
-  },
-  android: {
-    alertTitle: "Permissions required",
-    alertDescription: "This application needs to access your phone accounts",
-    cancelButton: "Cancel",
-    okButton: "ok",
-    imageName: "phone_account_icon",
-    additionalPermissions: [PermissionsAndroid.PERMISSIONS.example],
-    // Required to get audio in background when using Android 11
-    foregroundService: {
-      channelId: "com.company.my",
-      channelName: "Foreground service for my app",
-      notificationTitle: "My app is running on background",
-      notificationIcon: "Path to the resource icon of the notification",
-    },
-  },
-};
+import notifee, { AndroidImportance, EventType } from "@notifee/react-native";
 
 export async function initializeNotifications(userId: String) {
   const permissionGranted = await requestPermissionAndGetToken(userId);
@@ -49,18 +28,13 @@ async function requestPermissionAndGetToken(userId: String) {
         return false;
       }
     }
-    // RNCallKeep.setup(options).then((accepted) => {});
-    // RNCallKeep.setAvailable(true);
 
     const app = getApp();
     const messaging = getMessaging(app);
 
     messaging.setBackgroundMessageHandler(async (remoteMessage) => {
-      const callUUID = "sfdsdf";
-
-      //   RNCallKeep.displayIncomingCall(callUUID, "true");
-
-      const callerName = remoteMessage.data?.callerName || "Unknown Caller";
+      const { title, body } = remoteMessage.notification || {};
+      onDisplayNotification(remoteMessage.notification);
     });
 
     // Request FCM permission (iOS or Android unified API)
@@ -91,13 +65,34 @@ async function requestPermissionAndGetToken(userId: String) {
   }
 }
 
-// Foreground listener only — background handled separately at top-level
 function setupListeners() {
   const app = getApp();
   const messaging = getMessaging(app);
+
   messaging.onMessage(async (remoteMessage) => {
-    console.log(remoteMessage);
-    Alert.alert("📞 Incoming Call", remoteMessage.notification?.body || "");
-    // Optional: trigger native call UI like react-native-callkeep
+    console.log("📥 Foreground FCM:", remoteMessage);
+    await onDisplayNotification(remoteMessage);
+  });
+}
+
+async function onDisplayNotification(remoteMessage: any) {
+  console.log(remoteMessage.data, "dxds");
+  const { title, body, calleeId } = remoteMessage.data || {};
+  const channelId = await notifee.createChannel({
+    id: "default",
+    name: "Default Channel",
+    importance: AndroidImportance.HIGH, // 🔥 Required for heads-up banner
+  });
+  console.log(calleeId);
+  await notifee.displayNotification({
+    title: "Call from " + calleeId,
+    body: body,
+    android: {
+      channelId,
+      smallIcon: "ic_launcher", // Ensure this icon exists in android/app/src/main/res
+      pressAction: {
+        id: "default",
+      },
+    },
   });
 }
