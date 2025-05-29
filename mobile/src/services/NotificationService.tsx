@@ -6,9 +6,13 @@ import messaging, {
 } from "@react-native-firebase/messaging";
 import { Alert, Platform, PermissionsAndroid } from "react-native";
 import { BACKEND_URL } from "../api/config";
-import notifee, { AndroidImportance, EventType } from "@notifee/react-native";
+import notifee, {
+  AndroidCategory,
+  AndroidImportance,
+  EventType,
+} from "@notifee/react-native";
 
-export async function initializeNotifications(userId: String) {
+export async function initializeNotifications(userId: string) {
   const permissionGranted = await requestPermissionAndGetToken(userId);
   if (permissionGranted) {
     setupListeners();
@@ -16,9 +20,8 @@ export async function initializeNotifications(userId: String) {
 }
 
 // Handles permission + token generation
-async function requestPermissionAndGetToken(userId: String) {
+async function requestPermissionAndGetToken(userId: string) {
   try {
-    // On Android 13+, request POST_NOTIFICATIONS permission explicitly
     if (Platform.OS === "android" && Platform.Version >= 33) {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
@@ -30,15 +33,9 @@ async function requestPermissionAndGetToken(userId: String) {
     }
 
     const app = getApp();
-    const messaging = getMessaging(app);
+    const messagingInstance = getMessaging(app);
 
-    messaging.setBackgroundMessageHandler(async (remoteMessage) => {
-      const { title, body } = remoteMessage.notification || {};
-      onDisplayNotification(remoteMessage.notification);
-    });
-
-    // Request FCM permission (iOS or Android unified API)
-    const authStatus = await requestPermission(messaging);
+    const authStatus = await requestPermission(messagingInstance);
     const enabled =
       authStatus === AuthorizationStatus.AUTHORIZED ||
       authStatus === AuthorizationStatus.PROVISIONAL;
@@ -48,10 +45,9 @@ async function requestPermissionAndGetToken(userId: String) {
       return false;
     }
 
-    const token = await messaging.getToken();
+    const token = await messagingInstance.getToken();
     console.log("📲 FCM Token:", token);
 
-    // Send token to your backend mapped to userId
     await fetch(BACKEND_URL + "/api/notification/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -67,32 +63,98 @@ async function requestPermissionAndGetToken(userId: String) {
 
 function setupListeners() {
   const app = getApp();
-  const messaging = getMessaging(app);
+  const messagingInstance = getMessaging(app);
 
-  messaging.onMessage(async (remoteMessage) => {
+  // Foreground messages
+  messagingInstance.onMessage(async (remoteMessage) => {
     console.log("📥 Foreground FCM:", remoteMessage);
     await onDisplayNotification(remoteMessage);
+  });
+
+  // Background message handler
+  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+    console.log("📥 Background FCM:", remoteMessage);
+    await onDisplayNotification(remoteMessage);
+  });
+
+  // setInterval(() => {
+  //   onDisplayNotification({
+  //     data: {
+  //       title: "test",
+  //       body: "test",
+  //       calleeId: "123",
+  //       callerId: "456",
+  //       roomId: "789",
+  //     },
+  //   });
+  // }, 30000);
+  // Button press handling
+  notifee.onForegroundEvent(({ type, detail }) => {
+    if (type === EventType.ACTION_PRESS) {
+      const actionId = detail.pressAction?.id;
+      const { roomId, callerId } = detail.notification?.data || {};
+
+      if (actionId === "accept") {
+        console.log("✅ Call accepted");
+        // navigation.navigate("CallScreen", { roomId, callerId });
+      }
+
+      if (actionId === "reject") {
+        console.log("❌ Call rejected");
+        // Notify server or clean up
+      }
+    }
   });
 }
 
 async function onDisplayNotification(remoteMessage: any) {
-  console.log(remoteMessage.data, "dxds");
-  const { title, body, calleeId } = remoteMessage.data || {};
+  const { title, body, calleeId, callerId, roomId } = remoteMessage.data || {};
+
+  try {
+    await notifee.deleteChannel("default"); // For dev only; remove in prod
+  } catch {}
+
   const channelId = await notifee.createChannel({
     id: "default",
     name: "Default Channel",
-    importance: AndroidImportance.HIGH, // 🔥 Required for heads-up banner
+    importance: AndroidImportance.HIGH,
+    vibration: true,
+    vibrationPattern: [300, 500],
   });
-  console.log(calleeId);
+
   await notifee.displayNotification({
-    title: "Call from " + calleeId,
-    body: body,
+    title: `Incoming Call from ${callerId}`,
+    body: "Tap to answer or reject",
     android: {
       channelId,
-      smallIcon: "ic_launcher", // Ensure this icon exists in android/app/src/main/res
+      smallIcon: "ic_launcher",
+      category: AndroidCategory.CALL,
+      importance: AndroidImportance.HIGH,
       pressAction: {
         id: "default",
       },
+      actions: [
+        {
+          title: "Accept",
+          pressAction: {
+            id: "accept",
+          },
+        },
+        {
+          title: "Reject",
+          pressAction: {
+            id: "reject",
+          },
+          // destructive: true,
+        },
+      ],
+      ongoing: true,
+      autoCancel: false, // 🔒 Prevents it from auto-dismiss
+    },
+    data: {
+      roomId,
+      callerId,
+      calleeId,
     },
   });
 }

@@ -122,10 +122,11 @@ async function sendCallPushNotification(
         // },
         data: {
           title: "Incoming Call",
+          from: callerId.toString(),
           calleeId,
           body: "You have an incoming video call.",
           type: "CALL",
-          roomId: "abc123",
+          roomId: roomId.toString(),
         },
         android: {
           priority: "high",
