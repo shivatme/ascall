@@ -1,0 +1,106 @@
+const APP_VARIANT = process.env.APP_VARIANT;
+const IS_DEV = APP_VARIANT === "development";
+const IS_PREVIEW = APP_VARIANT === "preview";
+const IS_PROD = APP_VARIANT === "production";
+
+export default {
+  expo: {
+    name: getAppName(),
+    slug: "mobile",
+    version: "0.1.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
+    newArchEnabled: true,
+    splash: {
+      image: "./assets/splash-icon.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff",
+    },
+    ios: {
+      supportsTablet: true,
+      bitcode: false,
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#ffffff",
+      },
+      permissions: [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH",
+      ],
+      googleServicesFile: "./google-services.json",
+      package: getUniqueIdentifier(),
+    },
+    web: {
+      favicon: "./assets/favicon.png",
+    },
+    plugins: [
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          cameraPermission: "Allow $(PRODUCT_NAME) to access your camera",
+          microphonePermission:
+            "Allow $(PRODUCT_NAME) to access your microphone",
+        },
+      ],
+      "expo-secure-store",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/messaging",
+      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          android: {
+            extraMavenRepos: [
+              "../../node_modules/@notifee/react-native/android/libs",
+            ],
+          },
+        },
+      ],
+    ],
+    extra: {
+      eas: {
+        projectId: "5a66cac7-4e43-4d95-8545-92dd2b081304",
+      },
+    },
+  },
+};
+
+function getAppName() {
+  if (IS_DEV) {
+    return "ASCALL (Dev)";
+  }
+
+  if (IS_PREVIEW) {
+    return "ASCALL (Preview)";
+  }
+
+  if (IS_PROD) {
+    return "ASCALL";
+  }
+  return "ASCALL (Dev)";
+}
+
+function getUniqueIdentifier() {
+  if (IS_DEV) {
+    return "com.ascall.dev";
+  }
+
+  if (IS_PREVIEW) {
+    return "com.ascall.preview";
+  }
+  if (IS_PROD) {
+    return "com.ascall.prod";
+  }
+  return "com.ascall.dev";
+}
