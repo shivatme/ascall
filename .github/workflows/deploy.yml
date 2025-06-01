@@ -54,6 +54,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "
             cd /home/ubuntu/ascall/backend &&
+            export DATABASE_URL='${{ secrets.DATABASE_URL }}' && 
+            export JWT='${{ secrets.JWT }}' &&
 
             mkdir -p dist/config/firebase_key &&
             echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
