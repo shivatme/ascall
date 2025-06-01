@@ -48,15 +48,15 @@ jobs:
 
       - name: Upload build to EC2
         run: |
-          scp -o StrictHostKeyChecking=no -i private.pem -r backend/dist backend/package.json backend/package-lock.json ubuntu@${{ secrets.EC2_PUBLIC_IP }}:/home/ubuntu/ascall/backend
+          scp -o StrictHostKeyChecking=no -i private.pem -r backend/dist backend/package.json backend/package-lock.json backend/prisma ubuntu@${{ secrets.EC2_PUBLIC_IP }}:/home/ubuntu/ascall/backend
 
       - name: SSH into EC2 and deploy
         run: |
           ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "
             cd /home/ubuntu/ascall/backend &&
 
-            mkdir -p .dist/config/firebase_key/ &&
-            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > .dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
+            mkdir -p dist/config/firebase_key &&
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
 
             npm install --omit=dev &&
             npx prisma migrate deploy &&
