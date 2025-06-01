@@ -56,8 +56,8 @@ jobs:
             cd /home/ubuntu/ascall/backend &&
 
             mkdir -p ./firebase_key &&
-            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ./firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
-            
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > .dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
+
             npm install --omit=dev &&
             npx prisma migrate deploy &&
             pm2 delete ascall-socket-server || true &&
