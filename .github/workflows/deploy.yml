@@ -53,15 +53,16 @@ jobs:
       - name: SSH into EC2 and deploy
         run: |
           ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "
-            cd /home/ubuntu/ascall/backend &&
-            export DATABASE_URL='${{ secrets.DATABASE_URL }}' && 
-            export JWT='${{ secrets.JWT }}' &&
+          cd /home/ubuntu/ascall/backend &&
 
-            mkdir -p dist/config/firebase_key &&
-            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
+          mkdir -p dist/config/firebase_key &&
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > dist/config/firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
 
-            npm install --omit=dev &&
-            npx prisma migrate deploy &&
-            pm2 delete ascall-socket-server || true &&
-            pm2 start dist/index.js --name 'ascall-socket-server'
+          echo 'DATABASE_URL=${{ secrets.DATABASE_URL }}' > .env &&
+          echo 'JWT=${{ secrets.JWT }}' >> .env &&
+
+          npm install --omit=dev &&
+          npx prisma migrate deploy &&
+          pm2 delete ascall-socket-server || true &&
+          pm2 start dist/index.js --name 'ascall-socket-server'
           "
