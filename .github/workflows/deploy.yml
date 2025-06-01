@@ -54,7 +54,12 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i private.pem ubuntu@${{ secrets.EC2_PUBLIC_IP }} "
             cd /home/ubuntu/ascall/backend &&
+
+            mkdir -p ./firebase_key &&
+            echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ./firebase_key/as-call-firebase-adminsdk-fbsvc-ef9d33a36a.json &&
+            
             npm install --omit=dev &&
+            npx prisma migrate deploy &&
             pm2 delete ascall-socket-server || true &&
             pm2 start dist/index.js --name 'ascall-socket-server'
           "
