@@ -17,6 +17,12 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
+    updates: {
+      url: "https://u.expo.dev/5a66cac7-4e43-4d95-8545-92dd2b081304",
+    },
+    runtimeVersion: {
+      policy: "appVersion",
+    },
     ios: {
       supportsTablet: true,
       bitcode: false,

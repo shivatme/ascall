@@ -24,6 +24,7 @@
     "expo-dev-client": "~5.0.20",
     "expo-secure-store": "~14.0.1",
     "expo-status-bar": "~2.0.1",
+    "expo-updates": "~0.27.4",
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-callkeep": "^4.3.16",
