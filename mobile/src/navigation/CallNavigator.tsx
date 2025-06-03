@@ -5,7 +5,6 @@ import MakeCallScreen from "../screens/MakeCallScreen";
 import IncomingCallScreen from "../screens/IncomingCallScreen";
 import OutgoingCallScreen from "../screens/OutgoingCallScreen";
 import CallScreen from "../screens/CallScreen";
-import SettingsScreen from "../screens/SettingsScreen";
 
 export type CallStackParamList = {
   MakeCall: undefined;
@@ -24,7 +23,6 @@ export default function CallNavigator() {
       <Stack.Screen name="IncomingCall" component={IncomingCallScreen} />
       <Stack.Screen name="OutgoingCall" component={OutgoingCallScreen} />
       <Stack.Screen name="Call" component={CallScreen} />
-      <Stack.Screen name="Setting" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }

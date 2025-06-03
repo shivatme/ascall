@@ -23,9 +23,12 @@ import {
 import appAuth from "./src/api/auth";
 import { WebRTCProvider } from "./src/context/WebRTCContext";
 // index.js
-import messaging from "@react-native-firebase/messaging";
+import { getMessaging } from "@react-native-firebase/messaging";
+import AppNavigator from "./src/navigation/AppNavigator";
 
-messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+const messaging = getMessaging();
+
+messaging.setBackgroundMessageHandler(async (remoteMessage) => {
   console.log("🔕 Background message:", remoteMessage);
   // Show call UI or store notification locally
 });
@@ -83,18 +86,22 @@ const App = (): JSX.Element => {
   if (initializing) return <></>;
 
   return (
-    <SocketProvider>
-      <WebRTCProvider>
-        <AuthContext.Provider value={{ user, setUser }}>
-          <NavigationContainer>
-            <SafeAreaView style={styles.container}>
-              <StatusBar style="light" backgroundColor="#000" />
-              {user ? <CallNavigator /> : <AuthNavigator />}
-            </SafeAreaView>
-          </NavigationContainer>
-        </AuthContext.Provider>
-      </WebRTCProvider>
-    </SocketProvider>
+    <AuthContext.Provider value={{ user, setUser }}>
+      <NavigationContainer>
+        <SafeAreaView style={styles.container}>
+          <StatusBar style="light" backgroundColor="#000" />
+          {user ? (
+            <SocketProvider>
+              <WebRTCProvider>
+                <AppNavigator />
+              </WebRTCProvider>
+            </SocketProvider>
+          ) : (
+            <AuthNavigator />
+          )}
+        </SafeAreaView>
+      </NavigationContainer>
+    </AuthContext.Provider>
   );
 };
 
