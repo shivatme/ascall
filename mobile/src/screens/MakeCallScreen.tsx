@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Button,
 } from "react-native";
 import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
@@ -159,6 +160,11 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
             </TouchableOpacity>
           </View>
         </>
+
+        <Button
+          title="Contacts"
+          onPress={() => navigation.navigate("ContactsScreen")}
+        />
       </Pressable>
     </KeyboardAvoidingView>
   );
