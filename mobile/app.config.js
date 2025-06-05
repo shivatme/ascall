@@ -3,11 +3,15 @@ const IS_DEV = APP_VARIANT === "development";
 const IS_PREVIEW = APP_VARIANT === "preview";
 const IS_PROD = APP_VARIANT === "production";
 
+const version = "0.1.0"; // Displayed app version (user-facing)
+const versionCode = 1; //Android Version Code
+const buildNumber = versionCode.toString(); //iOS Build Number
+
 export default {
   expo: {
     name: getAppName(),
     slug: "mobile",
-    version: "0.1.0",
+    version,
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
@@ -44,6 +48,7 @@ export default {
       ],
       googleServicesFile: "./google-services.json",
       package: getUniqueIdentifier(),
+      versionCode,
     },
     web: {
       favicon: "./assets/favicon.png",
@@ -84,29 +89,29 @@ export default {
 
 function getAppName() {
   if (IS_DEV) {
-    return "ASCALL (Dev)";
+    return "Synq (Dev)";
   }
 
   if (IS_PREVIEW) {
-    return "ASCALL (Preview)";
+    return "Synq (Preview)";
   }
 
   if (IS_PROD) {
-    return "ASCALL";
+    return "Synq";
   }
-  return "ASCALL (Dev)";
+  return "Synq (Dev)";
 }
 
 function getUniqueIdentifier() {
   if (IS_DEV) {
-    return "com.ascall.dev";
+    return "com.astch.synq.dev";
   }
 
   if (IS_PREVIEW) {
-    return "com.ascall.preview";
+    return "com.astch.synq.preview";
   }
   if (IS_PROD) {
-    return "com.ascall.prod";
+    return "com.astch.synq";
   }
-  return "com.ascall.dev";
+  return "com.astch.synq.dev";
 }
