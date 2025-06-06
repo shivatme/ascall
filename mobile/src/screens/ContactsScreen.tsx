@@ -1,22 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from "react-native";
 import * as Contacts from "expo-contacts";
-import { RouteProp } from "@react-navigation/native";
 
 type Contact = Contacts.Contact;
 
-type RootStackParamList = {
-  "Select Contact": undefined;
-  // Add more screens like:
-  // CallScreen: { name: string; phone: string };
-};
-
-type Props = {
-  navigation: any;
-  route: any;
-};
-
-const ContactsScreen: React.FC<Props> = ({ navigation }) => {
+const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
@@ -27,14 +22,12 @@ const ContactsScreen: React.FC<Props> = ({ navigation }) => {
           fields: [Contacts.Fields.PhoneNumbers],
         });
 
-        const filtered = data.filter(
-          (contact) => contact.phoneNumbers && contact.phoneNumbers.length > 0
-        );
+        const filtered = data.filter((contact) => contact.phoneNumbers?.length);
         setContacts(filtered);
       } else {
         Alert.alert(
           "Permission Denied",
-          "Please allow contact access to continue."
+          "Enable contact access in settings to use this feature."
         );
       }
     })();
@@ -44,39 +37,58 @@ const ContactsScreen: React.FC<Props> = ({ navigation }) => {
     const phoneNumber = contact.phoneNumbers?.[0]?.number;
     if (phoneNumber) {
       Alert.alert(`Calling ${contact.name}`, phoneNumber);
-      // navigation.navigate('CallScreen', { name: contact.name, phone: phoneNumber });
+      // Optionally call makeCall(phoneNumber) here
     } else {
-      Alert.alert("No Phone Number", `${contact.name} has no phone number.`);
+      Alert.alert("No Number", `${contact.name} doesn't have a phone number.`);
     }
   };
 
   const renderItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity
-      onPress={() => handleSelect(item)}
-      style={{
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "#ccc",
-      }}
-    >
-      <Text style={{ fontSize: 16 }}>{item.name}</Text>
-      <Text style={{ color: "#888" }}>
+    <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.number}>
         {item.phoneNumbers?.[0]?.number || "No number"}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={styles.container}>
       <FlatList
         data={contacts}
         renderItem={renderItem}
-        ListEmptyComponent={
-          <Text style={{ margin: 20 }}>No contacts found</Text>
-        }
+        ListEmptyComponent={<Text style={styles.empty}>No contacts found</Text>}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#050A0E",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  item: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#1A1C22",
+  },
+  name: {
+    fontSize: 16,
+    color: "#FFFFFF",
+  },
+  number: {
+    fontSize: 14,
+    color: "#D0D4DD",
+    marginTop: 4,
+  },
+  empty: {
+    color: "#D0D4DD",
+    textAlign: "center",
+    marginTop: 50,
+  },
+});
 
 export default ContactsScreen;
