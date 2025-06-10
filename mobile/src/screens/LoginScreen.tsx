@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -28,6 +28,8 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [codeSubmitted, setCodeSubmitted] = useState(false);
+  const [verificationInProgress, setVerificationInProgress] =
+    useState<boolean>(false);
 
   const handleSendCode = async () => {
     if (!phoneNumber) {
@@ -39,11 +41,12 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      const result = await signInWithPhoneNumber(getAuth(), fullPhoneNumber);
-      setConfirmResult(result);
-      Alert.alert("OTP Sent", "Please check your phone.");
+      const response = await signInWithPhoneNumber(getAuth(), fullPhoneNumber);
+      setConfirmResult(response);
+      setVerificationInProgress(true);
     } catch (err: any) {
-      setError(err.message || "Failed to send OTP.");
+      console.log(err.message);
+      setError("Failed to send OTP.");
     } finally {
       setLoading(false);
     }
@@ -56,8 +59,6 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     setCodeSubmitted(true);
     try {
       const result = await confirmResult.confirm(code);
-      const user = result.user;
-      console.log(await firebase.auth().currentUser?.getIdToken());
       handleLogin();
     } catch (err: any) {
       setError("Invalid code. Please try again.");
@@ -70,8 +71,10 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
   async function handleLogin() {
     const idToken = await firebase.auth().currentUser?.getIdToken();
     try {
-      if (!idToken) throw new Error("No id token found");
-      const { token, user } = await appAuth.login(idToken);
+      if (!idToken) {
+        throw new Error("No id token found");
+      }
+      const { token, user, isNewUser } = await appAuth.login(idToken);
       login(user);
     } catch (err: any) {
       setError(err?.message || "Something went wrong.");
@@ -80,6 +83,15 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     }
   }
 
+  function changePhoneNumber() {
+    setVerificationInProgress(false);
+    setConfirmResult(null);
+    setTimeout(() => {
+      phoneRef.current?.focus();
+    }, 100);
+  }
+
+  const phoneRef = useRef<TextInput>(null);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login with Phone</Text>
@@ -95,11 +107,13 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
           value={phoneNumber}
           onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ""))}
           maxLength={10}
+          ref={phoneRef}
+          editable={!verificationInProgress}
         />
       </View>
 
       {/* OTP Input */}
-      {confirmResult && (
+      {verificationInProgress && (
         <View style={styles.phoneRow}>
           <TextInput
             style={[styles.input, codeSubmitted && styles.disabledInput]}
@@ -118,7 +132,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
 
       {/* Send or Verify Button */}
       <Pressable
-        onPress={confirmResult ? handleVerifyCode : handleSendCode}
+        onPress={verificationInProgress ? handleVerifyCode : handleSendCode}
         style={({ pressed }) => [
           styles.button,
           pressed && styles.buttonPressed,
@@ -129,15 +143,25 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
           <ActivityIndicator color="#fff" />
         ) : (
           <Text style={styles.buttonText}>
-            {confirmResult ? "Verify OTP" : "Send OTP"}
+            {verificationInProgress ? "Verify OTP" : "Send OTP"}
           </Text>
         )}
       </Pressable>
 
-      {/* Navigation */}
-      <Pressable onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.link}>Don't have an account? Sign Up</Text>
-      </Pressable>
+      {verificationInProgress && (
+        <Pressable
+          onPress={changePhoneNumber}
+          hitSlop={10}
+          style={{
+            width: "80%",
+            alignSelf: "center",
+            justifyContent: "flex-end",
+            flexDirection: "row",
+          }}
+        >
+          <Text style={styles.link}>Edit Phone Number</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -158,6 +182,8 @@ const styles = StyleSheet.create({
   },
   phoneRow: {
     flexDirection: "row",
+    width: "80%",
+    alignSelf: "center",
     alignItems: "center",
     marginBottom: 15,
     backgroundColor: "#1E1E1E",
@@ -176,7 +202,7 @@ const styles = StyleSheet.create({
     height: 50,
     color: "#fff",
     backgroundColor: "transparent",
-    fontSize: 16,
+    fontSize: 18,
   },
   disabledInput: {
     opacity: 0.5,
@@ -187,6 +213,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 20,
+    width: "60%",
+    marginTop: 15,
+    alignSelf: "center",
   },
   buttonPressed: {
     opacity: 0.9,

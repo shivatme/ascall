@@ -63,13 +63,27 @@ export const login = async (req: any, res: any): Promise<any> => {
 
     const user: any = await prisma.user.findUnique({ where: { phone } });
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
+      const user: any = await prisma.user.create({
+        data: {
+          phone,
+        },
+      });
 
-    // const isMatch: any = await bcrypt.compare(password, user.password);
-    // if (!isMatch) {
-    //   return res.status(400).json({ message: "Invalid email or password" });
-    // }
+      const token: any = jwt.sign({ userId: user.id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      return res.status(200).json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+        },
+        isNewUser: true,
+      });
+    }
 
     const token: any = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "7d",
@@ -83,6 +97,7 @@ export const login = async (req: any, res: any): Promise<any> => {
         name: user.name,
         phone: user.phone,
       },
+      isNewUser: false,
     });
   } catch (error: any) {
     console.error("Login error:", error);
