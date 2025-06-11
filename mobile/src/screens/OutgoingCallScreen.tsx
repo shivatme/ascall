@@ -39,7 +39,6 @@ function OutgoingCallScreen({
     };
     const handleCallRejected = ({ roomId }: { roomId: string }) => {
       setCallState({ state: null });
-      console.log("✅ Call rejected, navigating to MakeCallScreen");
       navigation.navigate("MakeCall");
     };
 
