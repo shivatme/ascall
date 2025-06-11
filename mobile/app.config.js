@@ -78,6 +78,15 @@ export default {
           },
         },
       ],
+      [
+        "react-native-vision-camera",
+        {
+          cameraPermissionText: "$(PRODUCT_NAME) needs access to your Camera.",
+          enableMicrophonePermission: true,
+          microphonePermissionText:
+            "$(PRODUCT_NAME) needs access to your Microphone.",
+        },
+      ],
     ],
     extra: {
       eas: {
@@ -113,5 +122,5 @@ function getUniqueIdentifier() {
   if (IS_PROD) {
     return "com.astch.synq";
   }
-  return "com.astch.synq.dev";
+  return "com.astch.synq";
 }

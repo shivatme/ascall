@@ -16,12 +16,25 @@ import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
 import useAuth from "../auth/useAuth";
 import { initializeNotifications } from "../services/NotificationService";
+import {
+  useCameraPermission,
+  useMicrophonePermission,
+} from "react-native-vision-camera";
 
 interface MakeCallScreenProps {
   navigation: any;
 }
 
 function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
+  const {
+    hasPermission: hasCameraPermission,
+    requestPermission: requestCameraPermission,
+  } = useCameraPermission();
+  const {
+    hasPermission: hasMicrophonePermission,
+    requestPermission: requestMicrophonePermission,
+  } = useMicrophonePermission();
+
   const { user } = useAuth();
   const [calleeId, setCalleeId] = useState<string>("");
   const [callerId] = useState(user.phone?.slice(3));
