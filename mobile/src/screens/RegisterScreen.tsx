@@ -154,7 +154,7 @@ function SignupScreen({ navigation }: SignupScreenProps): JSX.Element {
         )}
       </Pressable>
 
-      <Pressable onPress={() => navigation.navigate("Login")}>
+      <Pressable onPress={() => navigation.navigate("LoginScreen")}>
         <Text style={styles.link}>Already have an account? Login</Text>
       </Pressable>
     </View>

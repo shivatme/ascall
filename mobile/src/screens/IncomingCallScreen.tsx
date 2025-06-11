@@ -20,18 +20,18 @@ function IncomingCallScreen({
     acceptCall(callerId, roomId);
     setCallState({ state: "callAccepted" });
 
-    navigation.navigate("Call", { roomId });
+    navigation.navigate("CallScreen", { roomId });
   }
 
   function rejectCallNow() {
     rejectCall(callerId);
-    navigation.navigate("MakeCall");
+    navigation.navigate("MakeCallScreen");
   }
 
   useEffect(() => {
     if (callState.state === null) {
       // console.log("Call ended");
-      navigation.navigate("MakeCall");
+      navigation.navigate("MakeCallScreen");
     }
   }, [callState]);
   return (

@@ -71,13 +71,13 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
   // Handle call
   function makeCall(calleeId: string) {
     const roomId = Math.random().toString();
-    navigation.navigate("OutgoingCall", { calleeId, roomId });
+    navigation.navigate("OutgoingCallScreen", { calleeId, roomId });
   }
 
   // Incoming call handler
   useEffect(() => {
     if (callState.state === "incomingCall" && callState.incomingCall) {
-      navigation.navigate("IncomingCall", {
+      navigation.navigate("IncomingCallScreen", {
         callerId: callState.incomingCall.from,
         roomId: callState.incomingCall.roomId,
       });
@@ -112,11 +112,11 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => {
-                  const phone = item.phoneNumbers?.[0]?.number.replace(
+                  const phone = item.phoneNumbers?.[0]?.number?.replace(
                     /\D/g,
                     ""
                   );
-                  setCalleeId(phone);
+                  if (phone) setCalleeId(phone);
                   setSearchQuery("");
                   setFilteredContacts([]);
                 }}
@@ -131,11 +131,6 @@ function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
       )}
 
       <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
-        <View style={styles.card}>
-          <Text style={styles.label}>Your Caller ID</Text>
-          <Text style={styles.phoneText}>{callerId}</Text>
-        </View>
-
         <View style={styles.callBox}>
           <Text style={styles.label}>Or enter number manually</Text>
 

@@ -207,7 +207,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     peerConnection.current?.close();
     peerConnection.current = null;
 
-    navigation.navigate("MakeCall");
+    navigation.navigate("MakeCallScreen");
   }
 
   const toggleAudio = () => {
@@ -363,7 +363,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
       peerConnection.current?.close();
       peerConnection.current = null;
-      navigation.navigate("MakeCall");
+      navigation.navigate("MakeCallScreen");
     }
   }, [callState]);
 

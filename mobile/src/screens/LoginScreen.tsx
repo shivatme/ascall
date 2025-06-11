@@ -63,7 +63,6 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     } catch (err: any) {
       setError("Invalid code. Please try again.");
       setCodeSubmitted(false);
-    } finally {
       setLoading(false);
     }
   };

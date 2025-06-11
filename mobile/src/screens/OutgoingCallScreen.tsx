@@ -22,7 +22,7 @@ function OutgoingCallScreen({
 
   function endCallNow() {
     endCall(calleeId);
-    navigation.navigate("MakeCall");
+    navigation.navigate("MakeCallScreen");
   }
 
   useEffect(() => {
@@ -35,11 +35,11 @@ function OutgoingCallScreen({
     const handleCallAccepted = ({ roomId }: { roomId: string }) => {
       console.log("✅ Call accepted, navigating to CallScreen");
       setCallState({ state: "callAccepted" });
-      navigation.navigate("Call", { roomId, isInitiator: true });
+      navigation.navigate("CallScreen", { roomId, isInitiator: true });
     };
     const handleCallRejected = ({ roomId }: { roomId: string }) => {
       setCallState({ state: null });
-      navigation.navigate("MakeCall");
+      navigation.navigate("MakeCallScreen");
     };
 
     socket.on("call-accepted", handleCallAccepted);

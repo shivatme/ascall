@@ -5,14 +5,12 @@ import MakeCallScreen from "../screens/MakeCallScreen";
 import IncomingCallScreen from "../screens/IncomingCallScreen";
 import OutgoingCallScreen from "../screens/OutgoingCallScreen";
 import CallScreen from "../screens/CallScreen";
-import HomeScreen from "../screens/HomeScreen";
 
 export type CallStackParamList = {
-  HomeScreen: undefined;
-  IncomingCall: { callerId: string };
-  OutgoingCall: { calleeId: string };
-  Call: { roomId: string };
-  Setting: undefined;
+  MakeCallScreen: undefined;
+  IncomingCallScreen: { callerId: string };
+  OutgoingCallScreen: { calleeId: string };
+  CallScreen: { roomId: string };
 };
 
 const Stack = createNativeStackNavigator<CallStackParamList>();
@@ -20,10 +18,10 @@ const Stack = createNativeStackNavigator<CallStackParamList>();
 export default function CallNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="IncomingCall" component={IncomingCallScreen} />
-      <Stack.Screen name="OutgoingCall" component={OutgoingCallScreen} />
-      <Stack.Screen name="Call" component={CallScreen} />
+      <Stack.Screen name="MakeCallScreen" component={MakeCallScreen} />
+      <Stack.Screen name="IncomingCallScreen" component={IncomingCallScreen} />
+      <Stack.Screen name="OutgoingCallScreen" component={OutgoingCallScreen} />
+      <Stack.Screen name="CallScreen" component={CallScreen} />
     </Stack.Navigator>
   );
 }

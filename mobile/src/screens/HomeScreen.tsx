@@ -71,13 +71,13 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   // Handle call
   function makeCall(calleeId: string) {
     const roomId = Math.random().toString();
-    navigation.navigate("OutgoingCall", { calleeId, roomId });
+    navigation.navigate("OutgoingCallScreen", { calleeId, roomId });
   }
 
   // Incoming call handler
   useEffect(() => {
     if (callState.state === "incomingCall" && callState.incomingCall) {
-      navigation.navigate("IncomingCall", {
+      navigation.navigate("IncomingCallScreen", {
         callerId: callState.incomingCall.from,
         roomId: callState.incomingCall.roomId,
       });
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     top: 110,
     left: 42,
     right: 42,
-    backgroundColor: "#1A1C22",
+    backgroundColor: "#3e3e3e",
     borderRadius: 8,
     zIndex: 999,
     maxHeight: 200,
