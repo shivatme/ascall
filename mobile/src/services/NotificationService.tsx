@@ -1,8 +1,7 @@
 import { getApp } from "@react-native-firebase/app";
-import messaging, {
+import {
   AuthorizationStatus,
   getMessaging,
-  requestPermission,
 } from "@react-native-firebase/messaging";
 import { Alert, Platform, PermissionsAndroid } from "react-native";
 import { BACKEND_URL } from "../api/config";
@@ -13,6 +12,9 @@ import notifee, {
 } from "@notifee/react-native";
 
 export async function initializeNotifications(userId: string) {
+  const firebaseApp = getApp();
+  const messaging = getMessaging(firebaseApp);
+  messaging.requestPermission;
   const permissionGranted = await requestPermissionAndGetToken(userId);
   if (permissionGranted) {
     setupListeners();
@@ -34,8 +36,8 @@ async function requestPermissionAndGetToken(userId: string) {
 
     const app = getApp();
     const messagingInstance = getMessaging(app);
-
-    const authStatus = await requestPermission(messagingInstance);
+    messagingInstance;
+    const authStatus = await messagingInstance.requestPermission();
     const enabled =
       authStatus === AuthorizationStatus.AUTHORIZED ||
       authStatus === AuthorizationStatus.PROVISIONAL;
@@ -72,7 +74,7 @@ function setupListeners() {
   });
 
   // Background message handler
-  messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  messagingInstance.setBackgroundMessageHandler(async (remoteMessage) => {
     console.log("📥 Background FCM:", remoteMessage);
     await onDisplayNotification(remoteMessage);
   });

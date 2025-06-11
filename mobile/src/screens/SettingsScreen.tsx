@@ -2,12 +2,14 @@ import React from "react";
 import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
 import useAuth from "../auth/useAuth";
 import { getAuth, signOut } from "@react-native-firebase/auth";
+import { getApp } from "@react-native-firebase/app";
 
 interface SettingsScreenProps {}
 
 function SettingsScreen(props: SettingsScreenProps): JSX.Element {
   const { logout } = useAuth();
-
+  const firebaseApp = getApp();
+  const auth = getAuth(firebaseApp);
   const handleLogout = () => {
     Alert.alert("Confirm Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
@@ -16,7 +18,7 @@ function SettingsScreen(props: SettingsScreenProps): JSX.Element {
   };
 
   function LogoutFirebase() {
-    signOut(getAuth());
+    signOut(auth);
     logout();
   }
   return (

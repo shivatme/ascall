@@ -1,39 +1,28 @@
 import { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
-import {
-  SafeAreaView,
-  StyleSheet,
-  ActivityIndicator,
-  View,
-} from "react-native";
+import { SafeAreaView, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import CallNavigator from "./src/navigation/CallNavigator";
 import { SocketProvider } from "./src/context/SocketContext";
 import InternalServerErrorScreen from "./src/screens/InternalServerErrorScreen";
 import { BACKEND_URL } from "./src/api/config";
-import authStorage from "./src/auth/authStorage";
 import AuthNavigator from "./src/navigation/AuthNavigator";
 import AuthContext from "./src/auth/authContext";
-import {
-  firebase,
-  FirebaseAuthTypes,
-  getAuth,
-  onAuthStateChanged,
-} from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
 import appAuth from "./src/api/auth";
 import { WebRTCProvider } from "./src/context/WebRTCContext";
 // index.js
 import { getMessaging } from "@react-native-firebase/messaging";
 import AppNavigator from "./src/navigation/AppNavigator";
-
-const messaging = getMessaging();
-
-messaging.setBackgroundMessageHandler(async (remoteMessage) => {
-  console.log("🔕 Background message:", remoteMessage);
-  // Show call UI or store notification locally
-});
+import { getApp } from "@react-native-firebase/app";
 
 const App = (): JSX.Element => {
+  const firebaseApp = getApp();
+  const auth = getAuth(firebaseApp);
+  const messaging = getMessaging(firebaseApp);
+  messaging.setBackgroundMessageHandler(async (remoteMessage) => {
+    console.log("🔕 Background message:", remoteMessage);
+    // Show call UI or store notification locally
+  });
   const [isBackendUp, setIsBackendUp] = useState<boolean | null>(null); // null = loading
   const [user, setUser] = useState<any | null>(null);
   const [initializing, setInitializing] = useState(true);
@@ -44,7 +33,6 @@ const App = (): JSX.Element => {
   }
 
   async function handleLogin() {
-    const auth = getAuth();
     const idToken = await auth.currentUser?.getIdToken();
     try {
       if (!idToken) throw new Error("No id token found");
@@ -66,7 +54,10 @@ const App = (): JSX.Element => {
   };
 
   useEffect(() => {
-    const subscriber = onAuthStateChanged(getAuth(), handleAuthStateChanged);
+    const subscriber = onAuthStateChanged(
+      getAuth(firebaseApp),
+      handleAuthStateChanged
+    );
     // checkBackend();
     return subscriber; // unsubscribe on unmount
   }, []);

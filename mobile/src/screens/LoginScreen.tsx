@@ -6,21 +6,19 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
-  Alert,
 } from "react-native";
-import auth, {
-  firebase,
-  getAuth,
-  signInWithPhoneNumber,
-} from "@react-native-firebase/auth";
+import { getAuth, signInWithPhoneNumber } from "@react-native-firebase/auth";
 import useAuth from "../auth/useAuth";
 import appAuth from "../api/auth";
+import { getApp } from "@react-native-firebase/app";
 
 interface LoginScreenProps {
   navigation: any;
 }
 
 function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
+  const firebaseApp = getApp();
+  const auth = getAuth(firebaseApp);
   const { login } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [code, setCode] = useState("");
@@ -41,7 +39,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      const response = await signInWithPhoneNumber(getAuth(), fullPhoneNumber);
+      const response = await signInWithPhoneNumber(auth, fullPhoneNumber);
       setConfirmResult(response);
       setVerificationInProgress(true);
     } catch (err: any) {
@@ -68,7 +66,7 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
   };
 
   async function handleLogin() {
-    const idToken = await firebase.auth().currentUser?.getIdToken();
+    const idToken = await auth.currentUser?.getIdToken();
     try {
       if (!idToken) {
         throw new Error("No id token found");
