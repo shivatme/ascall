@@ -20,7 +20,7 @@ export default function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      {/* <Stack.Screen name="CallNavigator" component={CallNavigator} /> */}
+      <Stack.Screen name="CallNavigator" component={CallNavigator} />
       <Stack.Screen name="Setting" component={SettingsScreen} />
       <Stack.Screen name="ContactsScreen" component={ContactsScreen} />
     </Stack.Navigator>

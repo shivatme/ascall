@@ -71,7 +71,10 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   // Handle call
   function makeCall(calleeId: string) {
     const roomId = Math.random().toString();
-    navigation.navigate("OutgoingCallScreen", { calleeId, roomId });
+    navigation.navigate("CallNavigator", {
+      screen: "MakeCallScreen",
+      params: { calleeId, roomId },
+    });
   }
 
   // Incoming call handler

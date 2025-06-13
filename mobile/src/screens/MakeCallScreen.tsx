@@ -1,21 +1,13 @@
 import { useEffect, useState } from "react";
 import {
   View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Keyboard,
   Text,
-  TextInput,
+  StyleSheet,
   TouchableOpacity,
-  FlatList,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
-import * as Contacts from "expo-contacts";
-import TextInputContainer from "../components/AppTextInput";
-import { useSocket } from "../context/SocketContext";
-import useAuth from "../auth/useAuth";
-import { initializeNotifications } from "../services/NotificationService";
+import { Camera, useCameraDevices } from "react-native-vision-camera";
 import {
   useCameraPermission,
   useMicrophonePermission,
@@ -23,153 +15,74 @@ import {
 
 interface MakeCallScreenProps {
   navigation: any;
+  route: {
+    params: {
+      calleeId: string;
+      roomId: string;
+    };
+  };
 }
 
-function MakeCallScreen({ navigation }: MakeCallScreenProps): JSX.Element {
+export default function MakeCallScreen({ route }: MakeCallScreenProps) {
+  const { calleeId } = route.params;
+
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [videoEnabled, setVideoEnabled] = useState(true);
+
   const {
     hasPermission: hasCameraPermission,
     requestPermission: requestCameraPermission,
   } = useCameraPermission();
   const {
-    hasPermission: hasMicrophonePermission,
-    requestPermission: requestMicrophonePermission,
+    hasPermission: hasMicPermission,
+    requestPermission: requestMicPermission,
   } = useMicrophonePermission();
 
-  const { user } = useAuth();
-  const [calleeId, setCalleeId] = useState<string>("");
-  const [callerId] = useState(user.phone?.slice(3));
-  const { socket, callState } = useSocket();
+  const devices = useCameraDevices();
+  const device = devices.front;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [allContacts, setAllContacts] = useState<Contacts.Contact[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Contacts.Contact[]>(
-    []
-  );
-
-  // Request permission and load contacts
   useEffect(() => {
-    (async () => {
-      const { status } = await Contacts.requestPermissionsAsync();
-      if (status === "granted") {
-        const { data } = await Contacts.getContactsAsync({
-          fields: [Contacts.Fields.PhoneNumbers],
-        });
-        const contactsWithPhone = data.filter(
-          (c) => c.phoneNumbers && c.phoneNumbers.length > 0
-        );
-        setAllContacts(contactsWithPhone);
-      }
-    })();
+    requestCameraPermission();
+    requestMicPermission();
   }, []);
 
-  // Filter contacts based on search query
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredContacts([]);
-    } else {
-      const filtered = allContacts.filter((contact) =>
-        contact.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredContacts(filtered.slice(0, 5)); // Show top 5 results
-    }
-  }, [searchQuery, allContacts]);
-
-  // Register socket
-  useEffect(() => {
-    if (socket) {
-      socket.emit("register-user", callerId);
-    }
-  }, [socket, callerId]);
-
-  // Handle call
-  function makeCall(calleeId: string) {
-    const roomId = Math.random().toString();
-    navigation.navigate("OutgoingCallScreen", { calleeId, roomId });
-  }
-
-  // Incoming call handler
-  useEffect(() => {
-    if (callState.state === "incomingCall" && callState.incomingCall) {
-      navigation.navigate("IncomingCallScreen", {
-        callerId: callState.incomingCall.from,
-        roomId: callState.incomingCall.roomId,
-      });
-    }
-  }, [callState]);
-
-  useEffect(() => {
-    if (callerId) {
-      initializeNotifications(callerId);
-    }
-  }, [callerId]);
+  const toggleMic = () => setMicEnabled((prev) => !prev);
+  const toggleVideo = () => setVideoEnabled((prev) => !prev);
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {/* Search Bar */}
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search contact"
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <View style={styles.callBox}>
+        <Text style={styles.label}>Calling {calleeId}</Text>
 
-      {/* Floating Contact Suggestions */}
-      {filteredContacts.length > 0 && (
-        <View style={styles.floatingList}>
-          <FlatList
-            data={filteredContacts}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  const phone = item.phoneNumbers?.[0]?.number?.replace(
-                    /\D/g,
-                    ""
-                  );
-                  if (phone) setCalleeId(phone);
-                  setSearchQuery("");
-                  setFilteredContacts([]);
-                }}
-              >
-                <Text style={styles.contactItem}>
-                  {item.name} - {item.phoneNumbers?.[0]?.number}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
-
-      <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
-        <View style={styles.callBox}>
-          <Text style={styles.label}>Or enter number manually</Text>
-
-          <TextInputContainer
-            placeholder={"Enter Caller ID"}
-            value={calleeId}
-            setValue={(text: string) => setCalleeId(text)}
-            keyboardType={"tel"}
-          />
-
-          <TouchableOpacity
-            style={styles.callBtn}
-            onPress={() => makeCall(calleeId)}
-          >
-            <Text style={styles.callBtnText}>Call Now</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity onPress={() => navigation.navigate("ContactsScreen")}>
-          <Text
-            style={{ color: "#1E88E5", textAlign: "center", marginTop: 16 }}
-          >
-            Open Full Contacts
+        <TouchableOpacity style={styles.callBtn} onPress={toggleMic}>
+          <Text style={styles.callBtnText}>
+            {micEnabled ? "Mute Mic" : "Unmute Mic"}
           </Text>
         </TouchableOpacity>
-      </Pressable>
+
+        <TouchableOpacity style={styles.callBtn} onPress={toggleVideo}>
+          <Text style={styles.callBtnText}>
+            {videoEnabled ? "Turn Off Video" : "Turn On Video"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {videoEnabled && device && hasCameraPermission ? (
+        <View style={styles.cameraPreview}>
+          <Camera
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive={true}
+          />
+        </View>
+      ) : (
+        <View style={styles.cameraPreviewOff}>
+          <Text style={{ color: "#aaa" }}>Video off</Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -180,53 +93,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#050A0E",
     paddingHorizontal: 42,
   },
-  searchInput: {
-    marginTop: 60,
-    height: 48,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "#1A1C22",
-    color: "#FFFFFF",
-  },
-  floatingList: {
-    position: "absolute",
-    top: 110,
-    left: 42,
-    right: 42,
-    backgroundColor: "#1A1C22",
-    borderRadius: 8,
-    zIndex: 999,
-    maxHeight: 200,
-  },
-  contactItem: {
-    padding: 12,
-    color: "#fff",
-    borderBottomWidth: 0.5,
-    borderColor: "#333",
-  },
-  card: {
-    padding: 35,
-    backgroundColor: "#1A1C22",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 14,
-    marginTop: 20,
-  },
   callBox: {
     backgroundColor: "#1A1C22",
     padding: 40,
-    marginTop: 25,
+    marginTop: 60,
     justifyContent: "center",
     borderRadius: 14,
   },
   label: {
     fontSize: 18,
     color: "#D0D4DD",
-  },
-  phoneText: {
-    fontSize: 22,
-    color: "#ffff",
-    marginTop: 12,
   },
   callBtn: {
     height: 50,
@@ -240,6 +116,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
   },
+  cameraPreview: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    width: 120,
+    height: 160,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#1E88E5",
+    backgroundColor: "#000",
+  },
+  cameraPreviewOff: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    width: 120,
+    height: 160,
+    borderRadius: 12,
+    backgroundColor: "#1A1C22",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#333",
+  },
 });
-
-export default MakeCallScreen;
