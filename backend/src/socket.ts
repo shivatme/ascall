@@ -113,49 +113,25 @@ async function sendCallPushNotification(
       where: { userId: user.id },
     });
 
-    console.log(calleeId, fcmToken);
     if (fcmToken) {
-      console.log(callerId);
-      const res = await admin.messaging().send({
-        token: fcmToken.token,
+      try {
+        const res = await admin.messaging().send({
+          token: fcmToken.token,
 
-        data: {
-          title: "Incoming Call",
-          // from: callerId?.toString(),
-          calleeId,
-          body: "You have an incoming video call from " + callerId,
-          type: "CALL",
-          roomId: roomId?.toString(),
-        },
-        android: {
-          priority: "high",
-        },
-      });
-      console.log(res);
+          data: {
+            title: "Incoming Call",
+            calleeId,
+            body: "You have an incoming video call from " + callerId,
+            type: "CALL",
+            roomId: roomId?.toString(),
+          },
+          android: {
+            priority: "high",
+          },
+        });
+      } catch (error) {
+        console.error("🔴 Error sending FCM notification:", error);
+      }
     }
   }
-
-  // if (!deviceToken) return;
-
-  // const message = {
-  //   to: deviceToken,
-  //   data: {
-  //     type: "INCOMING_CALL",
-  //     callerId,
-  //     roomId,
-  //   },
-  //   notification: {
-  //     title: "Incoming Call",
-  //     body: "You have a new call",
-  //   },
-  // };
-
-  // await fetch('https://fcm.googleapis.com/fcm/send', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `key=${process.env.FCM_SERVER_KEY}`,
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify(message),
-  // });
 }

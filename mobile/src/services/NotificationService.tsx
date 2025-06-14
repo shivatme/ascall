@@ -3,7 +3,7 @@ import {
   AuthorizationStatus,
   getMessaging,
 } from "@react-native-firebase/messaging";
-import { Alert, Platform, PermissionsAndroid } from "react-native";
+import { Platform, PermissionsAndroid } from "react-native";
 import { BACKEND_URL } from "../api/config";
 import notifee, {
   AndroidCategory,
