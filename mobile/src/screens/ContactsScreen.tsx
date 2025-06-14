@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
+  Pressable,
+  TextInput,
 } from "react-native";
 import * as Contacts from "expo-contacts";
-
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 type Contact = Contacts.Contact;
 
 const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -24,6 +26,7 @@ const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
         const filtered = data.filter((contact) => contact.phoneNumbers?.length);
         setContacts(filtered);
+        setFilteredContacts(filtered);
       } else {
         Alert.alert(
           "Permission Denied",
@@ -36,29 +39,95 @@ const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const handleSelect = (contact: Contact) => {
     const phoneNumber = contact.phoneNumbers?.[0]?.number;
     if (phoneNumber) {
-      Alert.alert(`Calling ${contact.name}`, phoneNumber);
+      navigation.navigate("CallNavigator", {
+        screen: "MakeCallScreen",
+        params: { calleeId: phoneNumber, roomId: Math.random().toString() },
+      });
       // Optionally call makeCall(phoneNumber) here
     } else {
       Alert.alert("No Number", `${contact.name} doesn't have a phone number.`);
     }
   };
 
-  const renderItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.number}>
-        {item.phoneNumbers?.[0]?.number || "No number"}
-      </Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: Contact }) => {
+    const name = item.name || "Unknown";
+    const number = item.phoneNumbers?.[0]?.number || "No number";
 
+    return (
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handleSelect(item)}
+        activeOpacity={0.7}
+      >
+        <MaterialIcons
+          name="account-circle"
+          size={48}
+          color="#ef6c00"
+          style={styles.icon}
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.name} numberOfLines={1}>
+            {name}
+          </Text>
+          <Text style={styles.number} numberOfLines={1}>
+            {number}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredContacts, setFilteredContacts] = useState<Contacts.Contact[]>(
+    []
+  );
+  // Filter contacts based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredContacts(contacts);
+    } else {
+      const filtered = contacts.filter((contact) =>
+        contact.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredContacts(filtered.slice(0, 5)); // Show top 5 results
+    }
+  }, [searchQuery, contacts]);
   return (
     <View style={styles.container}>
-      <FlatList
-        data={contacts}
-        renderItem={renderItem}
-        ListEmptyComponent={<Text style={styles.empty}>No contacts found</Text>}
-      />
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 10,
+          // backgroundColor: "red",
+          marginTop: 60,
+          alignItems: "center",
+        }}
+      >
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search contact or dial a number"
+          placeholderTextColor="#888"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+      <View
+        style={{
+          // padding: 5,
+          marginTop: 10,
+          marginHorizontal: 5,
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
+        <FlatList
+          data={filteredContacts}
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No contacts found</Text>
+          }
+        />
+      </View>
     </View>
   );
 };
@@ -70,19 +139,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+  searchInput: {
+    height: 48,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#1A1C22",
+    justifyContent: "center",
+    flex: 1,
+    color: "#ffffff",
+    fontSize: 16,
+  },
   item: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A1C22",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    // borderBottomWidth: 1,
+    borderBottomColor: "#2C2E36",
+    backgroundColor: "#121417",
+  },
+  icon: {
+    marginRight: 12,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: "center",
   },
   name: {
     fontSize: 16,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
   number: {
     fontSize: 14,
-    color: "#D0D4DD",
-    marginTop: 4,
+    color: "#A0A4AE",
+    marginTop: 2,
   },
   empty: {
     color: "#D0D4DD",
