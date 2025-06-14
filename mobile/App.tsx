@@ -14,6 +14,7 @@ import { WebRTCProvider } from "./src/context/WebRTCContext";
 import { getMessaging } from "@react-native-firebase/messaging";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { getApp } from "@react-native-firebase/app";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const App = (): JSX.Element => {
   const firebaseApp = getApp();
@@ -77,22 +78,24 @@ const App = (): JSX.Element => {
   if (initializing) return <></>;
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
-      <NavigationContainer>
-        <SafeAreaView style={styles.container}>
-          <StatusBar style="light" backgroundColor="#000" />
-          {user ? (
-            <SocketProvider>
-              <WebRTCProvider>
-                <AppNavigator />
-              </WebRTCProvider>
-            </SocketProvider>
-          ) : (
-            <AuthNavigator />
-          )}
-        </SafeAreaView>
-      </NavigationContainer>
-    </AuthContext.Provider>
+    <GestureHandlerRootView>
+      <AuthContext.Provider value={{ user, setUser }}>
+        <NavigationContainer>
+          <SafeAreaView style={styles.container}>
+            <StatusBar style="light" backgroundColor="#000" />
+            {user ? (
+              <SocketProvider>
+                <WebRTCProvider>
+                  <AppNavigator />
+                </WebRTCProvider>
+              </SocketProvider>
+            ) : (
+              <AuthNavigator />
+            )}
+          </SafeAreaView>
+        </NavigationContainer>
+      </AuthContext.Provider>
+    </GestureHandlerRootView>
   );
 };
 
