@@ -1,10 +1,15 @@
 import { Server } from "socket.io";
 
 let userSockets: { [userId: string]: string } = {};
+function getUserIdFromSocketId(socketId: string): string | undefined {
+  return Object.keys(userSockets).find(
+    (userId) => userSockets[userId] === socketId
+  );
+}
 
 export const initSocket = (io: Server) => {
   io.on("connection", (socket) => {
-    console.log(`✅ Connected: ${socket.id}`);
+    // console.log(`✅ Connected: ${socket.id}`);
 
     // === Call lifecycle events ===
     // Assuming users have a userId they send upon connecting:
@@ -14,15 +19,17 @@ export const initSocket = (io: Server) => {
       console.log(`User ${userId} registered with socket ID ${socket.id}`);
     });
 
-    socket.on("call-user", async ({ calleeId, roomId, callerId }) => {
+    socket.on("call-user", async ({ calleeId, roomId }) => {
       console.log(`Calling user ${calleeId} in room ${roomId}`);
       socket.join(roomId);
-
+      console.log(userSockets, calleeId);
       const calleeSocket = userSockets[calleeId];
-
+      const callerId = getUserIdFromSocketId(socket.id);
+      if (!callerId) return;
       if (calleeSocket) {
         io.to(calleeSocket).emit("incoming-call", {
           from: socket.id,
+          callerId,
           roomId,
         });
         console.log(`Calling user ${calleeSocket} in room ${roomId}`);
@@ -98,7 +105,6 @@ async function sendCallPushNotification(
   callerId: string,
   roomId: string
 ) {
-  console.log(calleeId, "callerId");
   const user = await prisma.user.findUnique({
     where: { phone: `+91${calleeId}` },
   });
@@ -109,7 +115,7 @@ async function sendCallPushNotification(
 
     console.log(calleeId, fcmToken);
     if (fcmToken) {
-      console.log(fcmToken);
+      console.log(callerId);
       const res = await admin.messaging().send({
         token: fcmToken.token,
         // notification: {
@@ -122,11 +128,12 @@ async function sendCallPushNotification(
         // },
         data: {
           title: "Incoming Call",
-          from: callerId.toString(),
+          // from: "9851276532",
+          from: callerId?.toString(),
           calleeId,
           body: "You have an incoming video call.",
           type: "CALL",
-          roomId: roomId.toString(),
+          roomId: roomId?.toString(),
         },
         android: {
           priority: "high",

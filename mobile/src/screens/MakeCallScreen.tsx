@@ -16,10 +16,11 @@ interface Props {
       contact: any;
     };
   };
+  navigation: any;
 }
 
-export default function MakeCallScreen({ route }: Props) {
-  const { calleeId, contact, roomId } = route.params;
+export default function MakeCallScreen({ route, navigation }: Props) {
+  const { calleeId, contact, roomId } = route?.params;
 
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
@@ -42,6 +43,18 @@ export default function MakeCallScreen({ route }: Props) {
 
   const toggleMic = () => setMicEnabled((prev) => !prev);
   const toggleVideo = () => setVideoEnabled((prev) => !prev);
+
+  function handleCall() {
+    const roomId = Math.random().toString();
+    console.log(calleeId, contact);
+    navigation.navigate("OutgoingCallScreen", {
+      calleeId: calleeId || contact.phoneNumbers[0].number,
+      roomId,
+      contact,
+      videoEnabled,
+      micEnabled,
+    });
+  }
   return (
     <View style={styles.container}>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -135,7 +148,7 @@ export default function MakeCallScreen({ route }: Props) {
         }}
       >
         <View style={styles.controls}>
-          <TouchableOpacity style={styles.callBtn}>
+          <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
             <MaterialCommunityIcons
               name="video-outline"
               size={30}

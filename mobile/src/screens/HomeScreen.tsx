@@ -45,9 +45,13 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   // Incoming call handler
   useEffect(() => {
     if (callState.state === "incomingCall" && callState.incomingCall) {
-      navigation.navigate("IncomingCallScreen", {
-        callerId: callState.incomingCall.from,
-        roomId: callState.incomingCall.roomId,
+      navigation.navigate("CallNavigator", {
+        screen: "IncomingCallScreen",
+        params: {
+          from: callState.incomingCall.callerId,
+          callerId: callState.incomingCall.from,
+          roomId: callState.incomingCall.roomId,
+        },
       });
     }
   }, [callState]);

@@ -22,7 +22,10 @@ interface SocketContextType {
       | "callDisconnected"
       | "callAccepted"
       | null;
-    incomingCall?: { from: string; roomId: string } | null | undefined;
+    incomingCall?:
+      | { from: string; roomId: string; callerId: string }
+      | null
+      | undefined;
   };
   setCallState: (state: SocketContextType["callState"]) => void;
   sendOffer: (offer: any, roomId: string) => void;
@@ -55,9 +58,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       setSocketInitialized(true); // Mark socket as initialized
     });
 
-    socket.on("incoming-call", ({ from, roomId }) => {
-      console.log("📲 Incoming call from", from);
-      setCallState({ state: "incomingCall", incomingCall: { from, roomId } });
+    socket.on("incoming-call", ({ from, roomId, callerId }) => {
+      console.log("📲 Incoming call from", callerId);
+      setCallState({
+        state: "incomingCall",
+        incomingCall: { from, roomId, callerId: callerId },
+      });
     });
     socket.on("call-rejected", ({ from }) => {
       console.log("📲 Rejected call ");

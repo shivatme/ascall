@@ -6,6 +6,9 @@ import { useSocket } from "../context/SocketContext";
 interface OutgoingCallScreenProps {
   route: any;
   navigation: any;
+  videoEnabled: boolean;
+  micEnabled: boolean;
+  contact: any;
 }
 
 function OutgoingCallScreen({
@@ -14,7 +17,7 @@ function OutgoingCallScreen({
 }: OutgoingCallScreenProps): JSX.Element {
   const { callUser, endCall, socket, setCallState } = useSocket();
 
-  const { calleeId, roomId } = route.params;
+  const { calleeId, roomId, contact, videoEnabled, micEnabled } = route.params;
 
   function makeCall(calleeId: string) {
     callUser(calleeId, roomId);
@@ -22,7 +25,7 @@ function OutgoingCallScreen({
 
   function endCallNow() {
     endCall(calleeId);
-    navigation.navigate("MakeCallScreen");
+    navigation.navigate("MakeCallScreen", { calleeId, roomId });
   }
 
   useEffect(() => {
@@ -39,7 +42,7 @@ function OutgoingCallScreen({
     };
     const handleCallRejected = ({ roomId }: { roomId: string }) => {
       setCallState({ state: null });
-      navigation.navigate("MakeCallScreen");
+      navigation.navigate("MakeCallScreen", { calleeId, roomId });
     };
 
     socket.on("call-accepted", handleCallAccepted);
@@ -72,7 +75,7 @@ function OutgoingCallScreen({
             color: "#D0D4DD",
           }}
         >
-          Calling to...
+          Calling {contact?.name || calleeId}
         </Text>
 
         <Text
@@ -80,7 +83,7 @@ function OutgoingCallScreen({
             fontSize: 36,
             marginTop: 12,
             color: "#ffff",
-            letterSpacing: 6,
+            letterSpacing: 2,
           }}
         >
           {calleeId}

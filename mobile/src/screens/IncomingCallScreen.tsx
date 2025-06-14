@@ -2,6 +2,7 @@ import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
+import { CommonActions } from "@react-navigation/native";
 
 interface IncomingCallScreenProps {
   route: any;
@@ -14,8 +15,8 @@ function IncomingCallScreen({
 }: IncomingCallScreenProps): JSX.Element {
   const { callState, acceptCall, rejectCall, setCallState } = useSocket();
 
-  const { callerId, roomId } = route.params;
-
+  const { callerId, roomId, from } = route.params;
+  console.log(from);
   function acceptCallNow() {
     acceptCall(callerId, roomId);
     setCallState({ state: "callAccepted" });
@@ -25,13 +26,24 @@ function IncomingCallScreen({
 
   function rejectCallNow() {
     rejectCall(callerId);
-    navigation.navigate("MakeCallScreen");
+
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "HomeScreen" }],
+      })
+    );
   }
 
   useEffect(() => {
     if (callState.state === null) {
       // console.log("Call ended");
-      navigation.navigate("MakeCallScreen");
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "HomeScreen" }],
+        })
+      );
     }
   }, [callState]);
   return (
@@ -57,7 +69,7 @@ function IncomingCallScreen({
             color: "#ffff",
           }}
         >
-          {callerId} is calling..
+          {from || callerId} is calling..
         </Text>
       </View>
       <View
