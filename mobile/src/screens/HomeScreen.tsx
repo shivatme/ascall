@@ -13,6 +13,7 @@ import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
 import useAuth from "../auth/useAuth";
 import { initializeNotifications } from "../services/NotificationService";
+import { MaterialIcons } from "@expo/vector-icons";
 
 interface HomeScreenProps {
   navigation: any;
@@ -33,6 +34,7 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
 
   // Handle call
   function makeCall(calleeId: string) {
+    if (calleeId.trim().length === 0) return;
     const roomId = Math.random().toString();
     navigation.navigate("CallNavigator", {
       screen: "MakeCallScreen",
@@ -104,7 +106,7 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
 
       <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
         <View style={styles.callBox}>
-          <Text style={styles.label}>Or enter number manually</Text>
+          <Text style={styles.label}>Enter number manually</Text>
 
           <TextInputContainer
             placeholder={"Enter Caller ID"}
@@ -120,14 +122,23 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
             <Text style={styles.callBtnText}>Call Now</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity onPress={() => navigation.navigate("ContactsScreen")}>
-          <Text
-            style={{ color: "#1E88E5", textAlign: "center", marginTop: 16 }}
-          >
-            Open Full Contacts
-          </Text>
-        </TouchableOpacity>
+      </Pressable>
+      <Pressable
+        style={{
+          position: "absolute",
+          bottom: 20,
+          right: 30,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          backgroundColor: "#0277BD",
+          padding: 10,
+          borderRadius: 10,
+        }}
+        onPress={() => navigation.navigate("ContactsScreen")}
+      >
+        <MaterialIcons name="contacts" size={30} color="#fff" />
+        <Text style={{ color: "#fff", fontSize: 16 }}>Contacts</Text>
       </Pressable>
     </KeyboardAvoidingView>
   );

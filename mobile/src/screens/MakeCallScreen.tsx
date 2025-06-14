@@ -6,6 +6,7 @@ import {
   useMicrophonePermission,
 } from "react-native-vision-camera";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import useAuth from "../auth/useAuth";
 
 interface Props {
   route: {
@@ -37,10 +38,10 @@ export default function MakeCallScreen({ route }: Props) {
       reqMicPerm();
     }, 300);
   }, []);
+  const { user } = useAuth();
 
   const toggleMic = () => setMicEnabled((prev) => !prev);
   const toggleVideo = () => setVideoEnabled((prev) => !prev);
-
   return (
     <View style={styles.container}>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -123,11 +124,30 @@ export default function MakeCallScreen({ route }: Props) {
           </View>
         </View>
       </View>
-      <View style={styles.controls}>
-        <TouchableOpacity style={styles.callBtn}>
-          <MaterialCommunityIcons name="video-outline" size={30} color="#fff" />
-          <Text style={styles.callBtnText}>Call</Text>
-        </TouchableOpacity>
+      <View
+        style={{
+          backgroundColor: "#2e2e2e",
+          padding: 20,
+          borderTopLeftRadius: 10,
+          borderTopRightRadius: 10,
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <View style={styles.controls}>
+          <TouchableOpacity style={styles.callBtn}>
+            <MaterialCommunityIcons
+              name="video-outline"
+              size={30}
+              color="#fff"
+            />
+            <Text style={styles.callBtnText}>Call</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ alignItems: "center" }}>
+          <Text style={{ color: "#cccccc", fontSize: 16 }}>Calling as</Text>
+          <Text style={{ color: "#fff", fontSize: 16 }}>{user.phone}</Text>
+        </View>
       </View>
     </View>
   );
@@ -174,10 +194,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   controls: {
-    backgroundColor: "#2e2e2e",
-    padding: 20,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
