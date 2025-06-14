@@ -118,20 +118,12 @@ async function sendCallPushNotification(
       console.log(callerId);
       const res = await admin.messaging().send({
         token: fcmToken.token,
-        // notification: {
-        //   title: "Incoming Call",
-        //   body: "You have an incoming video call.",
-        // },
-        // data: {
-        //   type: "CALL",
-        //   roomId: "abc123",
-        // },
+
         data: {
           title: "Incoming Call",
-          // from: "9851276532",
-          from: callerId?.toString(),
+          // from: callerId?.toString(),
           calleeId,
-          body: "You have an incoming video call.",
+          body: "You have an incoming video call from " + callerId,
           type: "CALL",
           roomId: roomId?.toString(),
         },

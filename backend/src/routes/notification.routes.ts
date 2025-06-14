@@ -15,7 +15,7 @@ router.post("/token", async (req: any, res: any): Promise<any> => {
   if (!phone || !token) {
     return res.status(400).json({ error: "Missing userId or token" });
   }
-
+  console.log(phone, token);
   const user = await prisma.user.findUnique({
     where: { phone: `+91${phone}` },
   });
@@ -29,11 +29,14 @@ router.post("/token", async (req: any, res: any): Promise<any> => {
 
     if (existing) {
       // Already stored — update user ID if necessary
+      console.log("update FCM token");
       await prisma.fcmToken.update({
         where: { token },
         data: { userId: user.id },
       });
     } else {
+      console.log("create FCM token");
+
       await prisma.fcmToken.create({
         data: { userId: user.id, token },
       });

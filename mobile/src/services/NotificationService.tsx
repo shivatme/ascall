@@ -93,7 +93,7 @@ function setupListeners() {
   notifee.onForegroundEvent(({ type, detail }) => {
     if (type === EventType.ACTION_PRESS) {
       const actionId = detail.pressAction?.id;
-      const { roomId, callerId } = detail.notification?.data || {};
+      const { roomId } = detail.notification?.data || {};
 
       if (actionId === "accept") {
         console.log("✅ Call accepted");
@@ -109,7 +109,7 @@ function setupListeners() {
 }
 
 async function onDisplayNotification(remoteMessage: any) {
-  const { title, body, calleeId, callerId, roomId } = remoteMessage.data || {};
+  const { title, body, calleeId, roomId } = remoteMessage.data || {};
 
   try {
     await notifee.deleteChannel("default"); // For dev only; remove in prod
@@ -124,8 +124,9 @@ async function onDisplayNotification(remoteMessage: any) {
   });
 
   await notifee.displayNotification({
-    title: `Incoming Call from ${callerId}`,
+    title: `Incoming Call from`,
     body: "Tap to answer or reject",
+
     android: {
       channelId,
       smallIcon: "ic_launcher",
@@ -134,6 +135,8 @@ async function onDisplayNotification(remoteMessage: any) {
       pressAction: {
         id: "default",
       },
+      loopSound: true,
+
       actions: [
         {
           title: "Accept",
@@ -154,7 +157,6 @@ async function onDisplayNotification(remoteMessage: any) {
     },
     data: {
       roomId,
-      callerId,
       calleeId,
     },
   });
