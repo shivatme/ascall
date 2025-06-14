@@ -41,7 +41,11 @@ const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     if (phoneNumber) {
       navigation.navigate("CallNavigator", {
         screen: "MakeCallScreen",
-        params: { calleeId: phoneNumber, roomId: Math.random().toString() },
+        params: {
+          calleeId: phoneNumber,
+          roomId: Math.random().toString(),
+          contact: contact,
+        },
       });
       // Optionally call makeCall(phoneNumber) here
     } else {
