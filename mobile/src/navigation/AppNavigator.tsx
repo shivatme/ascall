@@ -10,7 +10,7 @@ import HomeScreen from "../screens/HomeScreen";
 export type CallStackParamList = {
   HomeScreen: undefined;
   CallNavigator: undefined;
-  Setting: undefined;
+  SettingScreen: undefined;
   ContactsScreen: undefined;
 };
 
@@ -21,7 +21,7 @@ export default function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="CallNavigator" component={CallNavigator} />
-      <Stack.Screen name="Setting" component={SettingsScreen} />
+      <Stack.Screen name="SettingScreen" component={SettingsScreen} />
       <Stack.Screen name="ContactsScreen" component={ContactsScreen} />
     </Stack.Navigator>
   );

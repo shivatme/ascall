@@ -48,7 +48,6 @@ async function requestPermissionAndGetToken(userId: string) {
     }
 
     const token = await messagingInstance.getToken();
-    console.log("📲 FCM Token:", token);
 
     await fetch(BACKEND_URL + "/api/notification/token", {
       method: "POST",

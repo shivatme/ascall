@@ -7,11 +7,8 @@ import {
   Pressable,
   Keyboard,
   Text,
-  TextInput,
   TouchableOpacity,
-  FlatList,
 } from "react-native";
-import * as Contacts from "expo-contacts";
 import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
 import useAuth from "../auth/useAuth";
@@ -26,40 +23,6 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   const [calleeId, setCalleeId] = useState<string>("");
   const [callerId] = useState(user.phone?.slice(3));
   const { socket, callState } = useSocket();
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [allContacts, setAllContacts] = useState<Contacts.Contact[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Contacts.Contact[]>(
-    []
-  );
-
-  // Request permission and load contacts
-  useEffect(() => {
-    (async () => {
-      const { status } = await Contacts.requestPermissionsAsync();
-      if (status === "granted") {
-        const { data } = await Contacts.getContactsAsync({
-          fields: [Contacts.Fields.PhoneNumbers],
-        });
-        const contactsWithPhone = data.filter(
-          (c) => c.phoneNumbers && c.phoneNumbers.length > 0
-        );
-        setAllContacts(contactsWithPhone);
-      }
-    })();
-  }, []);
-
-  // Filter contacts based on search query
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredContacts([]);
-    } else {
-      const filtered = allContacts.filter((contact) =>
-        contact.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredContacts(filtered.slice(0, 5)); // Show top 5 results
-    }
-  }, [searchQuery, allContacts]);
 
   // Register socket
   useEffect(() => {
@@ -99,39 +62,45 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
       style={styles.container}
     >
       {/* Search Bar */}
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search contact"
-        placeholderTextColor="#888"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-
-      {/* Floating Contact Suggestions */}
-      {filteredContacts.length > 0 && (
-        <View style={styles.floatingList}>
-          <FlatList
-            data={filteredContacts}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  const phone = item.phoneNumbers?.[0]?.number?.replace(
-                    /\D/g,
-                    ""
-                  );
-                  if (phone) setCalleeId(phone);
-                  setSearchQuery("");
-                  setFilteredContacts([]);
-                }}
-              >
-                <Text style={styles.contactItem}>
-                  {item.name} - {item.phoneNumbers?.[0]?.number}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
+      <View
+        style={{
+          flexDirection: "row",
+          gap: 10,
+          // backgroundColor: "red",
+          marginTop: 60,
+          alignItems: "center",
+        }}
+      >
+        <Pressable
+          style={styles.searchInput}
+          onPress={() => navigation.navigate("ContactsScreen")}
+        >
+          <Text style={styles.searchInputText}>Search contacts</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => navigation.navigate("SettingScreen")}
+          style={{
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#ef6c00",
+            // padding: 10,
+            height: 35,
+            width: 35,
+            borderRadius: 100,
+            // marginLeft: 20,
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontWeight: "500",
+              fontSize: 16,
+            }}
+          >
+            {user.name[0] || "U"}
+          </Text>
+        </Pressable>
+      </View>
 
       <Pressable onPress={Keyboard.dismiss} style={{ flex: 1 }}>
         <View style={styles.callBox}>
@@ -171,12 +140,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 42,
   },
   searchInput: {
-    marginTop: 60,
     height: 48,
     borderRadius: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     backgroundColor: "#1A1C22",
-    color: "#FFFFFF",
+    justifyContent: "center",
+    flex: 1,
+  },
+  searchInputText: {
+    color: "#cccccc",
+    fontSize: 16,
   },
   floatingList: {
     position: "absolute",
