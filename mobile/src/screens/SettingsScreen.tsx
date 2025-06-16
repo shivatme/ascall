@@ -20,14 +20,15 @@ function SettingsScreen(): JSX.Element {
     signOut(auth);
     logout();
   };
-  console.log(`https://ui-avatars.com/api/?name=${user?.name || "User"}`);
   return (
     <View style={styles.container}>
       {/* Profile Header */}
       <View style={styles.profileContainer}>
         <Image
           source={{
-            uri: `https://ui-avatars.com/api/?name=${user?.name || "User"}`,
+            uri: `https://ui-avatars.com/api/?name=${
+              user?.name.toLowerCase() || "User"
+            }&background=random`,
           }}
           style={styles.avatar}
         />

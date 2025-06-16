@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  Dimensions,
 } from "react-native";
 import {
   RTCPeerConnection,
@@ -17,6 +18,13 @@ import {
 import { useSocket } from "../context/SocketContext";
 import { FontAwesome, Ionicons, SimpleLineIcons } from "@expo/vector-icons";
 import { useWebRTC } from "../context/WebRTCContext";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 
 interface CallScreenProps {
   route: any;
@@ -427,6 +435,85 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   }
 
   const [fullScreenSelf, setFullScreenSelf] = useState(false);
+  const { width, height } = Dimensions.get("window");
+  const smallVideoHeight = 150;
+  const smallVideoWidth = 100;
+  const padding = 40;
+  const corners = [
+    { x: padding, y: padding * 2 }, // top-left
+    { x: width - smallVideoWidth - padding, y: padding * 2 }, // top-right
+    { x: padding, y: height - smallVideoHeight - padding }, // bottom-left
+    {
+      x: width - smallVideoWidth - padding,
+      y: height - smallVideoHeight - padding,
+    }, // bottom-leftright
+  ];
+
+  const getClosestCorner = (point: { x: number; y: number }) => {
+    "worklet";
+
+    let minDist = Infinity;
+    let closest = corners[0];
+
+    for (const corner of corners) {
+      const dist = (corner.x - point.x) ** 2 + (corner.y - point.y) ** 2;
+      if (dist < minDist) {
+        minDist = dist;
+        closest = corner;
+      }
+    }
+
+    return closest;
+  };
+
+  const isPressed = useSharedValue(false);
+  const offset = useSharedValue({
+    x: width - smallVideoWidth - padding,
+    y: height - smallVideoHeight - padding,
+  });
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: offset.value.x },
+        { translateY: offset.value.y },
+        { scale: withSpring(isPressed.value ? 1.05 : 1) },
+      ],
+    };
+  });
+  const start = useSharedValue({
+    x: width - smallVideoWidth - padding,
+    y: height - smallVideoHeight - padding,
+  });
+
+  const gesture = Gesture.Pan()
+    .onBegin(() => {
+      isPressed.value = true;
+    })
+    .onUpdate((e) => {
+      offset.value = {
+        x: e.translationX + start.value.x,
+        y: e.translationY + start.value.y,
+      };
+    })
+    .onEnd(() => {
+      const current = {
+        x: offset.value.x,
+        y: offset.value.y,
+      };
+      const nearestCorner = getClosestCorner(current);
+
+      // Animate to nearest corner
+      offset.value = {
+        x: withTiming(nearestCorner.x),
+        y: withTiming(nearestCorner.y),
+      };
+
+      // Save new start value for next drag
+      start.value = nearestCorner;
+    })
+    .onFinalize(() => {
+      isPressed.value = false;
+    });
   return (
     <View style={styles.container}>
       {remoteStream && localStream ? (
@@ -447,32 +534,35 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
           </View>
         </View>
       )}
-
-      {isVideoEnabled && localStream && remoteStream ? (
-        <Pressable
-          onPress={() => {
-            setFullScreenSelf(!fullScreenSelf);
-          }}
-          style={styles.localPreviewWrapper}
-          key={isFrontCamera.toString()}
-        >
-          <RTCView
-            streamURL={
-              fullScreenSelf ? remoteStream.toURL() : localStream.toURL()
-            }
-            style={styles.localVideo}
-            objectFit="cover"
-            mirror={true}
-            zOrder={8}
-          />
-        </Pressable>
-      ) : (
-        <View style={styles.localPreviewWrapper}>
-          <View style={[styles.localVideo, styles.videoOffPlaceholder]}>
-            <Text style={styles.videoOffText}>Video Off</Text>
-          </View>
-        </View>
-      )}
+      <GestureDetector gesture={gesture}>
+        <Animated.View style={[styles.localPreviewWrapper2, animatedStyles]}>
+          {isVideoEnabled && localStream && remoteStream ? (
+            <Pressable
+              onPress={() => {
+                setFullScreenSelf(!fullScreenSelf);
+              }}
+              style={styles.localPreviewWrapper}
+              key={isFrontCamera.toString()}
+            >
+              <RTCView
+                streamURL={
+                  fullScreenSelf ? remoteStream.toURL() : localStream.toURL()
+                }
+                style={styles.localVideo}
+                objectFit="cover"
+                mirror={true}
+                zOrder={8}
+              />
+            </Pressable>
+          ) : (
+            <View style={styles.localPreviewWrapper}>
+              <View style={[styles.localVideo, styles.videoOffPlaceholder]}>
+                <Text style={styles.videoOffText}>Video Off</Text>
+              </View>
+            </View>
+          )}
+        </Animated.View>
+      </GestureDetector>
 
       <View
         style={{
@@ -575,11 +665,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-
-  localPreviewWrapper: {
+  localPreviewWrapper2: {
     position: "absolute",
-    bottom: 100,
-    right: 20,
+    // bottom: 100,
+    // right: 20,
+  },
+  localPreviewWrapper: {
+    // position: "absolute",
+    // bottom: 100,
+    // right: 20,
     width: 100,
     height: 150,
     borderRadius: 12,
