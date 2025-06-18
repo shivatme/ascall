@@ -42,10 +42,16 @@ let mediaConstraints = {
 let isVoiceOnly = false;
 
 function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
-  const { roomId, isInitiator } = route.params;
+  const {
+    roomId,
+    isInitiator,
+    calleeId,
+    videoEnabled = true,
+    micEnabled = true,
+  } = route.params;
   const [isFrontCamera, setIsFrontCamera] = useState(true);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(micEnabled);
+  const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(videoEnabled);
   const localMediaStream = useRef<MediaStream | null>(null);
   const remoteMediaStream = useRef<MediaStream | null>(null);
   const remoteCandidates = useRef<RTCIceCandidate[]>([]);
@@ -209,13 +215,19 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     localMediaStream.current = null;
     setLocalStream(null);
 
-    // remoteMediaStream.current = null;
-    // setRemoteStream(null);
+    remoteMediaStream.current = null;
+    setRemoteStream(null);
 
     peerConnection.current?.close();
     peerConnection.current = null;
-
-    navigation.navigate("MakeCallScreen");
+    if (isInitiator === true)
+      navigation.navigate("MakeCallScreen", {
+        calleeId,
+        roomId,
+      });
+    else {
+      navigation.navigate("HomeScreen");
+    }
   }
 
   const toggleAudio = () => {
@@ -371,7 +383,14 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
       peerConnection.current?.close();
       peerConnection.current = null;
-      navigation.navigate("MakeCallScreen");
+      if (isInitiator === true)
+        navigation.navigate("MakeCallScreen", {
+          calleeId,
+          roomId,
+        });
+      else {
+        navigation.navigate("HomeScreen");
+      }
     }
   }, [callState]);
 
@@ -536,7 +555,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       )}
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.localPreviewWrapper2, animatedStyles]}>
-          {isVideoEnabled && localStream && remoteStream ? (
+          {localStream && remoteStream && isVideoEnabled ? (
             <Pressable
               onPress={() => {
                 setFullScreenSelf(!fullScreenSelf);
