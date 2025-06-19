@@ -533,8 +533,24 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     .onFinalize(() => {
       isPressed.value = false;
     });
+
+  const [showBottomButtons, setShowBottomButtons] = useState<boolean>(false);
+
+  function toggleBottomMenu() {
+    setShowBottomButtons((prev) => {
+      console.log(prev, offset.value.y, height / 2);
+      // if (prev === true && offset.value.y > height / 2) {
+      //   offset.value = {
+      //     x: offset.value.x,
+      //     y: withTiming(offset.value.y - 100),
+      //   };
+      // }
+      return !prev;
+    });
+  }
+
   return (
-    <View style={styles.container}>
+    <Pressable onPress={toggleBottomMenu} style={styles.container}>
       {remoteStream && localStream ? (
         <View>
           <RTCView
@@ -583,82 +599,84 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         </Animated.View>
       </GestureDetector>
 
-      <View
-        style={{
-          justifyContent: "space-around",
-          alignItems: "center",
-          position: "absolute",
-          bottom: 20,
-          alignSelf: "center",
-          flexDirection: "row",
-          width: "100%",
-        }}
-      >
-        <TouchableOpacity
-          onPress={switchCamera}
+      {showBottomButtons && (
+        <View
           style={{
-            backgroundColor: "#414141",
-            borderRadius: 30,
-            height: 60,
-            width: 60,
-            justifyContent: "center",
+            justifyContent: "space-around",
             alignItems: "center",
+            position: "absolute",
+            bottom: 20,
+            alignSelf: "center",
+            flexDirection: "row",
+            width: "100%",
           }}
         >
-          <Ionicons name={"camera-reverse-sharp"} size={28} color="white" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={toggleAudio}
-          style={{
-            backgroundColor: isAudioEnabled ? "#4CAF50" : "#A9A9A9",
-            borderRadius: 30,
-            height: 60,
-            width: 60,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <FontAwesome
-            name={isAudioEnabled ? "microphone" : "microphone-slash"}
-            size={28}
-            color="white"
-          />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={switchCamera}
+            style={{
+              backgroundColor: "#414141",
+              borderRadius: 30,
+              height: 60,
+              width: 60,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name={"camera-reverse-sharp"} size={28} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={toggleAudio}
+            style={{
+              backgroundColor: isAudioEnabled ? "#4CAF50" : "#A9A9A9",
+              borderRadius: 30,
+              height: 60,
+              width: 60,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <FontAwesome
+              name={isAudioEnabled ? "microphone" : "microphone-slash"}
+              size={28}
+              color="white"
+            />
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={toggleVideo}
-          style={{
-            backgroundColor: isVideoEnabled ? "#4CAF50" : "#A9A9A9",
-            borderRadius: 30,
-            height: 60,
-            width: 60,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <SimpleLineIcons
-            name={isVideoEnabled ? "camrecorder" : "camrecorder"}
-            size={28}
-            color="white"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            endCallNow();
-          }}
-          style={{
-            backgroundColor: "#FF5D5D",
-            borderRadius: 30,
-            height: 60,
-            aspectRatio: 1,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <SimpleLineIcons name="call-end" size={30} color="white" />
-        </TouchableOpacity>
-      </View>
-    </View>
+          <TouchableOpacity
+            onPress={toggleVideo}
+            style={{
+              backgroundColor: isVideoEnabled ? "#4CAF50" : "#A9A9A9",
+              borderRadius: 30,
+              height: 60,
+              width: 60,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <SimpleLineIcons
+              name={isVideoEnabled ? "camrecorder" : "camrecorder"}
+              size={28}
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              endCallNow();
+            }}
+            style={{
+              backgroundColor: "#FF5D5D",
+              borderRadius: 30,
+              height: 60,
+              aspectRatio: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <SimpleLineIcons name="call-end" size={30} color="white" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </Pressable>
   );
 }
 
