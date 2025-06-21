@@ -336,6 +336,13 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" },
         { urls: "stun:stun2.l.google.com:19302" },
+
+        //Temp Credentials
+        {
+          urls: "turn:turn.shivat.me:3478",
+          username: "shivam",
+          credential: "mystrongpassword123",
+        },
       ],
     });
     if (isInitiator) {
