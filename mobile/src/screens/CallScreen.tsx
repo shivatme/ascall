@@ -715,16 +715,8 @@ const styles = StyleSheet.create({
     // right: 20,
   },
   localPreviewWrapper: {
-    // position: "absolute",
-    // bottom: 100,
-    // right: 20,
     width: 100,
     height: 150,
-    borderRadius: 12,
-    overflow: "hidden", // This clips RTCView inside
-    backgroundColor: "#000",
-    borderWidth: 1,
-    borderColor: "#fff",
     elevation: 10,
     zIndex: 10,
   },

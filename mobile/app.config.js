@@ -3,8 +3,8 @@ const IS_DEV = APP_VARIANT === "development";
 const IS_PREVIEW = APP_VARIANT === "preview";
 const IS_PROD = APP_VARIANT === "production";
 
-const version = "0.1.0"; // Displayed app version (user-facing)
-const versionCode = 1; //Android Version Code
+const version = "0.2.0"; // Displayed app version (user-facing)
+const versionCode = 2; //Android Version Code
 const buildNumber = versionCode.toString(); //iOS Build Number
 
 export default {
@@ -13,13 +13,13 @@ export default {
     slug: "mobile",
     version,
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/logo.png",
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logo.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#000000",
     },
     updates: {
       url: "https://u.expo.dev/5a66cac7-4e43-4d95-8545-92dd2b081304",
@@ -33,7 +33,7 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#ffffff",
       },
       permissions: [
