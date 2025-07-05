@@ -1,8 +1,4 @@
-import {
-  MaterialCommunityIcons,
-  MaterialIcons,
-  SimpleLineIcons,
-} from "@expo/vector-icons";
+import { MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
@@ -11,6 +7,9 @@ import {
   useCameraDevices,
   useCameraPermission,
 } from "react-native-vision-camera";
+import { useFocusEffect } from "@react-navigation/native";
+import { BackHandler } from "react-native";
+import { useCallback } from "react";
 
 interface OutgoingCallScreenProps {
   route: any;
@@ -35,26 +34,32 @@ function OutgoingCallScreen({
   const [isVisionCameraActive, setVisionCameraActive] = useState(true);
   function endCallNow() {
     endCall(calleeId);
-    setVisionCameraActive(false);
-    navigation.navigate("MakeCallScreen", { calleeId, roomId });
+    navigation.goBack();
   }
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return true; // Prevent default behavior (go back)
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     makeCall(calleeId);
   }, [calleeId]);
-  useEffect(() => {
-    return () => {
-      setVisionCameraActive(false);
-    };
-  }, []);
 
   useEffect(() => {
     if (!socket) return;
 
     const handleCallAccepted = ({ roomId }: { roomId: string }) => {
-      console.log("✅ Call accepted, navigating to CallScreen");
-      setCallState({ state: "callAccepted" });
       setVisionCameraActive(false);
+      setCallState({ state: "callAccepted" });
       navigation.navigate("CallScreen", {
         roomId,
         isInitiator: true,
@@ -65,7 +70,6 @@ function OutgoingCallScreen({
     };
     const handleCallRejected = ({ roomId }: { roomId: string }) => {
       setCallState({ state: null });
-      setVisionCameraActive(false);
       navigation.navigate("MakeCallScreen", { calleeId, roomId });
     };
 
@@ -76,6 +80,16 @@ function OutgoingCallScreen({
       socket.off("call-accepted", handleCallAccepted);
     };
   }, [socket]);
+  useEffect(() => {
+    setVisionCameraActive(true);
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerBackVisible: false,
+    });
+    return () => {
+      setVisionCameraActive(false);
+    };
+  }, []);
   const devices = useCameraDevices();
   const device = devices[1];
   return (

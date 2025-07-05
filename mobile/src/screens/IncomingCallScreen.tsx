@@ -3,6 +3,9 @@ import React, { useEffect } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
 import { CommonActions } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import { BackHandler } from "react-native";
+import { useCallback } from "react";
 
 interface IncomingCallScreenProps {
   route: any;
@@ -16,7 +19,6 @@ function IncomingCallScreen({
   const { callState, acceptCall, rejectCall, setCallState } = useSocket();
 
   const { callerId, roomId, from } = route.params;
-  console.log(from);
   function acceptCallNow() {
     acceptCall(callerId, roomId);
     setCallState({ state: "callAccepted" });
@@ -26,26 +28,35 @@ function IncomingCallScreen({
 
   function rejectCallNow() {
     rejectCall(callerId);
-
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "HomeScreen" }],
-      })
-    );
+    navigation.goBack();
   }
 
   useEffect(() => {
     if (callState.state === null) {
-      // console.log("Call ended");
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "HomeScreen" }],
-        })
-      );
+      navigation.goBack();
     }
   }, [callState]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return true; // Prevent default behavior (go back)
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      };
+    }, [])
+  );
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerBackVisible: false,
+    });
+  }, []);
+
   return (
     <View
       style={{

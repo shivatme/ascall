@@ -39,6 +39,9 @@ export default function MakeCallScreen({ route, navigation }: Props) {
       reqMicPerm();
     }, 300);
     setVisionCameraActive(true);
+    return () => {
+      setVisionCameraActive(false);
+    };
   }, []);
   const { user } = useAuth();
 
@@ -46,9 +49,7 @@ export default function MakeCallScreen({ route, navigation }: Props) {
   const toggleVideo = () => setVideoEnabled((prev) => !prev);
 
   function handleCall() {
-    setVisionCameraActive(false);
     const roomId = Math.random().toString();
-    // console.log(calleeId, contact);
     navigation.navigate("OutgoingCallScreen", {
       calleeId: calleeId || contact.phoneNumbers[0].number,
       roomId,
@@ -78,7 +79,7 @@ export default function MakeCallScreen({ route, navigation }: Props) {
             <Camera
               style={StyleSheet.absoluteFill}
               device={device}
-              isActive={isVisionCameraActive}
+              isActive={false}
             />
           ) : (
             <View style={styles.videoOffContainer}>

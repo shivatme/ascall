@@ -25,6 +25,9 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useFocusEffect } from "@react-navigation/native";
+import { BackHandler } from "react-native";
+import { useCallback } from "react";
 
 interface CallScreenProps {
   route: any;
@@ -555,7 +558,26 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       return !prev;
     });
   }
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return true; // Prevent default behavior (go back)
+      };
 
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerBackVisible: false,
+    });
+  }, []);
   return (
     <Pressable onPress={toggleBottomMenu} style={styles.container}>
       {remoteStream && localStream ? (
