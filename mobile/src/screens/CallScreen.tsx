@@ -55,6 +55,10 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   const [isFrontCamera, setIsFrontCamera] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(micEnabled);
   const [isVideoEnabled, setIsVideoEnabled] = useState<boolean>(videoEnabled);
+  const [isRemoteVideoEnabled, setRemoteVideoEnabled] = useState<boolean>(true);
+  const [isRemoteAudioEnabled, setRemoteAudioEnabled] = useState<boolean>(true);
+  const [showBottomButtons, setShowBottomButtons] = useState<boolean>(false);
+
   const localMediaStream = useRef<MediaStream | null>(null);
   const remoteMediaStream = useRef<MediaStream | null>(null);
   const remoteCandidates = useRef<RTCIceCandidate[]>([]);
@@ -94,6 +98,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     peerConnection.current?.addEventListener("connectionstatechange", () => {
       switch (peerConnection.current?.connectionState) {
         case "closed":
+          endCallNow();
           console.log("Connection closed.");
           break;
       }
@@ -330,6 +335,22 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     handleRemoteCandidate(candidate.candidate);
     // processCandidates();
   };
+  // remoteMediaStream.current?.getTracks().forEach((track) => {
+  //   track.addEventListener("mute", () => {
+  //     if (track.kind === "audio") {
+  //       setRemoteAudioEnabled(false);
+  //     } else if (track.kind === "video") {
+  //       setRemoteVideoEnabled(false);
+  //     }
+  //   });
+  //   track.addEventListener("unmute", () => {
+  //     if (track.kind === "audio") {
+  //       setRemoteAudioEnabled(true);
+  //     } else if (track.kind === "video") {
+  //       setRemoteVideoEnabled(true);
+  //     }
+  //   });
+  // });
 
   useEffect(() => {
     if (peerConnection.current) return;
@@ -544,11 +565,8 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       isPressed.value = false;
     });
 
-  const [showBottomButtons, setShowBottomButtons] = useState<boolean>(false);
-
   function toggleBottomMenu() {
     setShowBottomButtons((prev) => {
-      console.log(prev, offset.value.y, height / 2);
       // if (prev === true && offset.value.y > height / 2) {
       //   offset.value = {
       //     x: offset.value.x,
@@ -745,7 +763,6 @@ const styles = StyleSheet.create({
   localVideo: {
     flex: 1,
     backgroundColor: "black",
-    zIndex: 11,
   },
 });
 

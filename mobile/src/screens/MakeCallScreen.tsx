@@ -79,7 +79,7 @@ export default function MakeCallScreen({ route, navigation }: Props) {
             <Camera
               style={StyleSheet.absoluteFill}
               device={device}
-              isActive={false}
+              isActive={isVisionCameraActive}
             />
           ) : (
             <View style={styles.videoOffContainer}>
