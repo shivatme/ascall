@@ -75,6 +75,9 @@ export default {
             extraMavenRepos: [
               "../../node_modules/@notifee/react-native/android/libs",
             ],
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            buildToolsVersion: "35.0.0",
           },
         },
       ],
