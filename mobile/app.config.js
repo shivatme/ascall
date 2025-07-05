@@ -3,8 +3,8 @@ const IS_DEV = APP_VARIANT === "development";
 const IS_PREVIEW = APP_VARIANT === "preview";
 const IS_PROD = APP_VARIANT === "production";
 
-const version = "0.2.0"; // Displayed app version (user-facing)
-const versionCode = 2; //Android Version Code
+const version = "0.2.2"; // Displayed app version (user-facing)
+const versionCode = 4; //Android Version Code
 const buildNumber = versionCode.toString(); //iOS Build Number
 
 export default {
@@ -46,7 +46,7 @@ export default {
         "android.permission.WAKE_LOCK",
         "android.permission.BLUETOOTH",
       ],
-      googleServicesFile: "./google-services.json",
+      googleServicesFile: "./google-service.json",
       package: getUniqueIdentifier(),
       versionCode,
     },
