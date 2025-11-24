@@ -1,13 +1,13 @@
-import * as SecureStore from "expo-secure-store";
+import * as Keychain from "react-native-keychain";
 
-const key = "user";
+const SERVICE = "ascall_user";
 
 type User = Record<string, any>;
 
 const storeUser = async (user: User): Promise<void> => {
   try {
     const json = JSON.stringify(user);
-    await SecureStore.setItemAsync(key, json);
+    await Keychain.setGenericPassword("user", json, { service: SERVICE });
     console.log("User stored");
   } catch (error) {
     console.log("Error storing user", error);
@@ -16,9 +16,9 @@ const storeUser = async (user: User): Promise<void> => {
 
 const getUser = async (): Promise<User | null> => {
   try {
-    const json = await SecureStore.getItemAsync(key);
-    if (json) {
-      return JSON.parse(json);
+    const credentials = await Keychain.getGenericPassword({ service: SERVICE });
+    if (credentials) {
+      return JSON.parse(credentials.password);
     }
     return null;
   } catch (error) {
@@ -29,7 +29,7 @@ const getUser = async (): Promise<User | null> => {
 
 const removeUser = async (): Promise<void> => {
   try {
-    await SecureStore.deleteItemAsync(key);
+    await Keychain.resetGenericPassword({ service: SERVICE });
     console.log("User removed");
   } catch (error) {
     console.log("Error removing user", error);
