@@ -16,7 +16,7 @@ import {
   RTCSessionDescription,
 } from "react-native-webrtc";
 import { useSocket } from "../context/SocketContext";
-import { FontAwesome } from "@react-native-vector-icons/FontAwesome";
+import { FontAwesome } from "@react-native-vector-icons/fontawesome";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
 import { useWebRTC } from "../context/WebRTCContext";
