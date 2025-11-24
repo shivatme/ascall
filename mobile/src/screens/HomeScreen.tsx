@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -13,7 +13,7 @@ import TextInputContainer from "../components/AppTextInput";
 import { useSocket } from "../context/SocketContext";
 import useAuth from "../auth/useAuth";
 import { initializeNotifications } from "../services/NotificationService";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@react-native-vector-icons/material-icons";
 
 interface HomeScreenProps {
   navigation: any;

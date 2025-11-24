@@ -16,7 +16,9 @@ import {
   RTCSessionDescription,
 } from "react-native-webrtc";
 import { useSocket } from "../context/SocketContext";
-import { FontAwesome, Ionicons, SimpleLineIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@react-native-vector-icons/FontAwesome";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
 import { useWebRTC } from "../context/WebRTCContext";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -123,7 +125,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         console.error("Negotiation er:", err);
       }
     });
-    peerConnection.current?.addEventListener("track", (event) => {
+    peerConnection.current?.addEventListener("track", event => {
       // Grab the remote track from the connected participant.
       remoteMediaStream.current =
         remoteMediaStream.current || new MediaStream();
@@ -138,7 +140,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       let ml = localMediaStream.current;
       localMediaStream.current
         ?.getTracks()
-        .forEach((track) => peerConnection.current?.addTrack(track, ml));
+        .forEach(track => peerConnection.current?.addTrack(track, ml));
     }
 
     let sessionConstraints = {
@@ -151,7 +153,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
     try {
       const offerDescription = await peerConnection.current?.createOffer(
-        sessionConstraints
+        sessionConstraints,
       );
       await peerConnection.current?.setLocalDescription(offerDescription);
       sendOffer(offerDescription, roomId);
@@ -160,7 +162,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       // Handle Errors
     }
 
-    peerConnection.current?.addEventListener("icecandidate", (event) => {
+    peerConnection.current?.addEventListener("icecandidate", event => {
       if (!event.candidate) {
         return;
       }
@@ -182,9 +184,9 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
     localMediaStream.current
       ?.getTracks()
-      .forEach((track) => peerConnection.current?.addTrack(track, mediaStream));
+      .forEach(track => peerConnection.current?.addTrack(track, mediaStream));
 
-    peerConnection.current?.addEventListener("icecandidate", (event) => {
+    peerConnection.current?.addEventListener("icecandidate", event => {
       if (!event.candidate) {
         return;
       }
@@ -192,7 +194,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       // socket.emit("ice-candidate", event.candidate, roomId);
     });
 
-    peerConnection.current?.addEventListener("track", (event) => {
+    peerConnection.current?.addEventListener("track", event => {
       // Grab the remote track from the connected participant.
       remoteMediaStream.current =
         remoteMediaStream.current || new MediaStream();
@@ -219,7 +221,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
   function endCallNow() {
     endCallByRoomId(roomId);
 
-    localMediaStream.current?.getTracks().forEach((track) => track.stop());
+    localMediaStream.current?.getTracks().forEach(track => track.stop());
     localMediaStream.current = null;
     setLocalStream(null);
 
@@ -248,7 +250,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         setIsAudioEnabled(!isEnabled);
 
         if (peerConnection.current) {
-          peerConnection.current.getSenders().forEach((sender) => {
+          peerConnection.current.getSenders().forEach(sender => {
             if (sender.track?.kind === "audio") {
               sender.track.enabled = !isEnabled;
             }
@@ -263,10 +265,10 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       setFullScreenSelf(false);
     }
     if (localMediaStream.current) {
-      localMediaStream.current.getVideoTracks().forEach((track) => {
+      localMediaStream.current.getVideoTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
-      setIsVideoEnabled((prev) => !prev);
+      setIsVideoEnabled(prev => !prev);
     }
   };
 
@@ -282,7 +284,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       ) {
         console.warn(
           "Skipping offer: not in stable state",
-          peerConnection.current?.signalingState
+          peerConnection.current?.signalingState,
         );
         return;
       }
@@ -308,7 +310,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
       if (signalingState !== "have-local-offer") {
         console.warn(
-          "Skipping setRemoteDescription(answer): not in 'have-local-offer'"
+          "Skipping setRemoteDescription(answer): not in 'have-local-offer'",
         );
         return;
       }
@@ -322,7 +324,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       await peerConnection.current.setRemoteDescription(remoteDesc);
 
       // Now add any stored ICE candidates
-      remoteCandidates.current.forEach((candidate) => {
+      remoteCandidates.current.forEach(candidate => {
         peerConnection.current?.addIceCandidate(candidate);
       });
       remoteCandidates.current = [];
@@ -405,7 +407,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
   useEffect(() => {
     if (callState.state === null) {
-      localMediaStream.current?.getTracks().forEach((track) => track.stop());
+      localMediaStream.current?.getTracks().forEach(track => track.stop());
       localMediaStream.current = null;
       setLocalStream(null);
 
@@ -432,7 +434,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
 
       // Count video input devices (cameras)
       const videoInputDevices = devices.filter(
-        (device) => device.kind === "videoinput"
+        device => device.kind === "videoinput",
       );
 
       if (videoInputDevices.length < 2) {
@@ -460,7 +462,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
         // Replace track in peer connection sender
         const sender = peerConnection.current
           .getSenders()
-          .find((s) => s.track?.kind === "video");
+          .find(s => s.track?.kind === "video");
 
         sender?.replaceTrack(newVideoTrack);
       }
@@ -539,7 +541,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     .onBegin(() => {
       isPressed.value = true;
     })
-    .onUpdate((e) => {
+    .onUpdate(e => {
       offset.value = {
         x: e.translationX + start.value.x,
         y: e.translationY + start.value.y,
@@ -566,7 +568,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
     });
 
   function toggleBottomMenu() {
-    setShowBottomButtons((prev) => {
+    setShowBottomButtons(prev => {
       // if (prev === true && offset.value.y > height / 2) {
       //   offset.value = {
       //     x: offset.value.x,
@@ -587,7 +589,7 @@ function CallScreen({ route, navigation }: CallScreenProps): JSX.Element {
       return () => {
         BackHandler.removeEventListener("hardwareBackPress", onBackPress);
       };
-    }, [])
+    }, []),
   );
 
   useEffect(() => {

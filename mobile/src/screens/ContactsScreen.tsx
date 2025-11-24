@@ -9,29 +9,42 @@ import {
   Pressable,
   TextInput,
 } from "react-native";
-import * as Contacts from "expo-contacts";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-type Contact = Contacts.Contact;
+import Contacts from "react-native-contacts";
+import { MaterialIcons } from "@react-native-vector-icons/material-icons";
+type Contact = any;
 
 const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
 
   useEffect(() => {
     (async () => {
-      const { status } = await Contacts.requestPermissionsAsync();
-      if (status === "granted") {
-        const { data } = await Contacts.getContactsAsync({
-          fields: [Contacts.Fields.PhoneNumbers],
-        });
+      try {
+        const permission = await Contacts.checkPermission();
+        const handleFetch = async () => {
+          const data = await Contacts.getAll();
+          const filtered = data.filter(
+            (contact: any) => contact.phoneNumbers?.length,
+          );
+          setContacts(filtered);
+          setFilteredContacts(filtered);
+        };
 
-        const filtered = data.filter((contact) => contact.phoneNumbers?.length);
-        setContacts(filtered);
-        setFilteredContacts(filtered);
-      } else {
-        Alert.alert(
-          "Permission Denied",
-          "Enable contact access in settings to use this feature."
-        );
+        if (permission === "authorized") {
+          await handleFetch();
+        } else {
+          const req = await Contacts.requestPermission();
+          if (req === "authorized") {
+            await handleFetch();
+          } else {
+            Alert.alert(
+              "Permission Denied",
+              "Enable contact access in settings to use this feature.",
+            );
+          }
+        }
+      } catch (err) {
+        console.warn("Contacts error:", err);
+        Alert.alert("Error", "Unable to load contacts.");
       }
     })();
   }, []);
@@ -83,15 +96,15 @@ const ContactsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredContacts, setFilteredContacts] = useState<Contacts.Contact[]>(
-    []
+    [],
   );
   // Filter contacts based on search query
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredContacts(contacts);
     } else {
-      const filtered = contacts.filter((contact) =>
-        contact.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = contacts.filter(contact =>
+        contact.name?.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredContacts(filtered.slice(0, 5)); // Show top 5 results
     }

@@ -5,7 +5,8 @@ import {
   useCameraPermission,
   useMicrophonePermission,
 } from "react-native-vision-camera";
-import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialIcons } from "@react-native-vector-icons/material-icons";
+// import MaterialCommunityIcons from "@react-native-vector-icons/material-community-icons";
 import useAuth from "../auth/useAuth";
 
 interface Props {
@@ -45,8 +46,8 @@ export default function MakeCallScreen({ route, navigation }: Props) {
   }, []);
   const { user } = useAuth();
 
-  const toggleMic = () => setMicEnabled((prev) => !prev);
-  const toggleVideo = () => setVideoEnabled((prev) => !prev);
+  const toggleMic = () => setMicEnabled(prev => !prev);
+  const toggleVideo = () => setVideoEnabled(prev => !prev);
 
   function handleCall() {
     const roomId = Math.random().toString();
@@ -131,11 +132,11 @@ export default function MakeCallScreen({ route, navigation }: Props) {
                 { backgroundColor: micEnabled ? "#dedfde" : "#1e1e1e" },
               ]}
             >
-              <MaterialCommunityIcons
+              {/* <MaterialCommunityIcons
                 name={micEnabled ? "microphone" : "microphone-off"}
                 size={30}
                 color={micEnabled ? "#000" : "#fff"}
-              />
+              /> */}
             </TouchableOpacity>
           </View>
         </View>
@@ -152,11 +153,11 @@ export default function MakeCallScreen({ route, navigation }: Props) {
       >
         <View style={styles.controls}>
           <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
-            <MaterialCommunityIcons
+            {/* <MaterialCommunityIcons
               name="video-outline"
               size={30}
               color="#fff"
-            />
+            /> */}
             <Text style={styles.callBtnText}>Call</Text>
           </TouchableOpacity>
         </View>

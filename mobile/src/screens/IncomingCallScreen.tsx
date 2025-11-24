@@ -1,5 +1,6 @@
-import { Ionicons, SimpleLineIcons } from "@expo/vector-icons";
-import React, { useEffect } from "react";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
+import React, { JSX, useEffect } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
 import { CommonActions } from "@react-navigation/native";
@@ -48,7 +49,7 @@ function IncomingCallScreen({
       return () => {
         BackHandler.removeEventListener("hardwareBackPress", onBackPress);
       };
-    }, [])
+    }, []),
   );
   useEffect(() => {
     navigation.setOptions({

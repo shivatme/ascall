@@ -1,5 +1,6 @@
-import { MaterialIcons, SimpleLineIcons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { MaterialIcons } from "@react-native-vector-icons/material-icons";
+import { SimpleLineIcons } from "@react-native-vector-icons/simple-line-icons";
+import React, { JSX, useEffect, useState } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useSocket } from "../context/SocketContext";
 import {
@@ -47,7 +48,7 @@ function OutgoingCallScreen({
       return () => {
         BackHandler.removeEventListener("hardwareBackPress", onBackPress);
       };
-    }, [])
+    }, []),
   );
 
   useEffect(() => {
