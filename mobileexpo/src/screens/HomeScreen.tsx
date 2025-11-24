@@ -21,7 +21,7 @@ interface HomeScreenProps {
 
 function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   const { user } = useAuth();
-  const [calleeId, setCalleeId] = useState<string>("");
+  const [calleeId, setCalleeId] = useState<string>("9653366316");
   const [callerId] = useState(user.phone?.slice(3));
   const { socket, callState } = useSocket();
 
