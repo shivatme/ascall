@@ -21,8 +21,9 @@ interface HomeScreenProps {
 
 function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
   const { user } = useAuth();
-  const [calleeId, setCalleeId] = useState<string>("9653366316");
-  const [callerId] = useState(user.phone?.slice(3));
+  console.log("User in HomeScreen:", user.uid);
+  const [calleeId, setCalleeId] = useState<string>(user.uid.toString() || "");
+  const callerId = user.uid.toString();
   const { socket, callState } = useSocket();
 
   // Register socket
@@ -30,7 +31,7 @@ function HomeScreen({ navigation }: HomeScreenProps): JSX.Element {
     if (socket) {
       socket.emit("register-user", callerId);
     }
-  }, [socket, callerId]);
+  }, [socket]);
 
   // Handle call
   function makeCall(calleeId: string) {
@@ -200,11 +201,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 18,
     color: "#D0D4DD",
-  },
-  phoneText: {
-    fontSize: 22,
-    color: "#ffff",
-    marginTop: 12,
   },
   callBtn: {
     height: 50,

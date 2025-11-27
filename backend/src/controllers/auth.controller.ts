@@ -50,6 +50,7 @@ export const register = async (req: any, res: any): Promise<any> => {
         id: user.id,
         email: user.email,
         name: user.name,
+        uid: user.uid,
       },
     });
   } catch (error: any) {
@@ -96,6 +97,7 @@ export const login = async (req: any, res: any): Promise<any> => {
         id: user.id,
         email: user.email,
         name: user.name,
+        uid: user.uid,
       },
     });
   } catch (error: any) {
