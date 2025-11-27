@@ -3,39 +3,44 @@ import { prisma } from "../config/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { LoginInput, RegisterInput } from "../types/auth";
-import admin from "../config/firebase";
 
-const JWT_SECRET: any = "process.env.JWT_SECRET!;";
+const JWT_SECRET: any = process.env.JWT_SECRET || "your-secret-key";
 if (!JWT_SECRET) throw new Error("JWT_SECRET not defined");
 
 export const register = async (req: any, res: any): Promise<any> => {
   try {
-    const { idToken, email, name }: any = req.body as any;
+    const { email, password, name }: RegisterInput = req.body;
 
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-
-    const phone = decodedToken.phone_number;
-    const existingUser: any = await prisma.user.findUnique({
-      where: { phone },
-    });
-    if (existingUser) {
+    // Validate input
+    if (!email || !password) {
       return res
         .status(400)
-        .json({ message: "Phone number already registered" });
+        .json({ message: "Email and password are required" });
     }
 
-    // const hashedPassword: any = await bcrypt.hash(password, 10);
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    const user: any = await prisma.user.create({
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
       data: {
         email,
-        // password: hashedPassword,
-        phone,
-        name,
+        password: hashedPassword,
+        name: name || null,
       },
     });
 
-    const token: any = jwt.sign({ userId: user.id }, JWT_SECRET, {
+    // Generate JWT token
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -55,37 +60,33 @@ export const register = async (req: any, res: any): Promise<any> => {
 
 export const login = async (req: any, res: any): Promise<any> => {
   try {
-    const { idToken }: any = req.body as any;
+    const { email, password }: LoginInput = req.body;
 
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-
-    const phone = decodedToken.phone_number;
-
-    const user: any = await prisma.user.findUnique({ where: { phone } });
-    if (!user) {
-      const user: any = await prisma.user.create({
-        data: {
-          phone,
-        },
-      });
-
-      const token: any = jwt.sign({ userId: user.id }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
-
-      return res.status(200).json({
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-        },
-        isNewUser: true,
-      });
+    // Validate input
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
-    const token: any = jwt.sign({ userId: user.id }, JWT_SECRET, {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Compare password
+    const isPasswordValid = await bcrypt.compare(password, user.password || "");
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -95,9 +96,7 @@ export const login = async (req: any, res: any): Promise<any> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        phone: user.phone,
       },
-      isNewUser: false,
     });
   } catch (error: any) {
     console.error("Login error:", error);

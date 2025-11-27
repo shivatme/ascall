@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { JSX, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,129 +7,69 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { getAuth, signInWithPhoneNumber } from "@react-native-firebase/auth";
 import useAuth from "../auth/useAuth";
-import appAuth from "../api/auth";
-import { getApp } from "@react-native-firebase/app";
+import { login as loginApi } from "../api/auth";
 
 interface LoginScreenProps {
   navigation: any;
 }
 
 function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
-  const firebaseApp = getApp();
-  const auth = getAuth(firebaseApp);
   const { login } = useAuth();
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [code, setCode] = useState("");
-  const [confirmResult, setConfirmResult] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [codeSubmitted, setCodeSubmitted] = useState(false);
-  const [verificationInProgress, setVerificationInProgress] =
-    useState<boolean>(false);
 
-  const handleSendCode = async () => {
-    if (!phoneNumber) {
-      setError("Phone number is required.");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Email and password are required.");
       return;
     }
-    const fullPhoneNumber = `+91${phoneNumber}`;
 
     setLoading(true);
     setError(null);
     try {
-      const response = await signInWithPhoneNumber(auth, fullPhoneNumber);
-      setConfirmResult(response);
-      setVerificationInProgress(true);
-    } catch (err: any) {
-      console.log(err.message);
-      setError("Failed to send OTP.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!confirmResult) return;
-    setLoading(true);
-    setError(null);
-    setCodeSubmitted(true);
-    try {
-      const result = await confirmResult.confirm(code);
-      handleLogin();
-    } catch (err: any) {
-      setError("Invalid code. Please try again.");
-      setCodeSubmitted(false);
-      setLoading(false);
-    }
-  };
-
-  async function handleLogin() {
-    const idToken = await auth.currentUser?.getIdToken();
-    try {
-      if (!idToken) {
-        throw new Error("No id token found");
-      }
-      const { token, user, isNewUser } = await appAuth.login(idToken);
+      const { user } = await loginApi(email, password);
       login(user);
     } catch (err: any) {
-      setError(err?.message || "Something went wrong.");
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Login failed. Please try again.",
+      );
+      console.log(err);
     } finally {
       setLoading(false);
     }
-  }
-
-  function changePhoneNumber() {
-    setVerificationInProgress(false);
-    setConfirmResult(null);
-    setTimeout(() => {
-      phoneRef.current?.focus();
-    }, 100);
-  }
-
-  const phoneRef = useRef<TextInput>(null);
+  };
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login with Phone</Text>
+      <Text style={styles.title}>Login</Text>
 
-      {/* Phone input with +91 */}
-      <View style={styles.phoneRow}>
-        <Text style={styles.phonePrefix}>+91</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter phone number"
-          placeholderTextColor="#888"
-          keyboardType="phone-pad"
-          value={phoneNumber}
-          onChangeText={(text) => setPhoneNumber(text.replace(/[^0-9]/g, ""))}
-          maxLength={10}
-          ref={phoneRef}
-          editable={!verificationInProgress}
-        />
-      </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#888"
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+      />
 
-      {/* OTP Input */}
-      {verificationInProgress && (
-        <View style={styles.phoneRow}>
-          <TextInput
-            style={[styles.input, codeSubmitted && styles.disabledInput]}
-            placeholder="Enter OTP"
-            placeholderTextColor="#888"
-            keyboardType="number-pad"
-            value={code}
-            onChangeText={(text) => !codeSubmitted && setCode(text)}
-            editable={!codeSubmitted}
-          />
-        </View>
-      )}
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#888"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
 
-      {/* Error Message */}
       {error && <Text style={styles.error}>{error}</Text>}
 
-      {/* Send or Verify Button */}
       <Pressable
-        onPress={verificationInProgress ? handleVerifyCode : handleSendCode}
+        onPress={handleLogin}
         style={({ pressed }) => [
           styles.button,
           pressed && styles.buttonPressed,
@@ -139,26 +79,13 @@ function LoginScreen({ navigation }: LoginScreenProps): JSX.Element {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>
-            {verificationInProgress ? "Verify OTP" : "Send OTP"}
-          </Text>
+          <Text style={styles.buttonText}>Login</Text>
         )}
       </Pressable>
 
-      {verificationInProgress && (
-        <Pressable
-          onPress={changePhoneNumber}
-          hitSlop={10}
-          style={{
-            width: "80%",
-            alignSelf: "center",
-            justifyContent: "flex-end",
-            flexDirection: "row",
-          }}
-        >
-          <Text style={styles.link}>Edit Phone Number</Text>
-        </Pressable>
-      )}
+      <Pressable onPress={() => navigation.navigate("RegisterScreen")}>
+        <Text style={styles.link}>Don't have an account? Sign up</Text>
+      </Pressable>
     </View>
   );
 }
@@ -173,36 +100,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "600",
-    marginBottom: 20,
+    marginBottom: 30,
     color: "#fff",
     textAlign: "center",
   },
-  phoneRow: {
-    flexDirection: "row",
-    width: "80%",
-    alignSelf: "center",
-    alignItems: "center",
-    marginBottom: 15,
-    backgroundColor: "#1E1E1E",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#333",
-    paddingHorizontal: 10,
-  },
-  phonePrefix: {
-    color: "#fff",
-    fontSize: 16,
-    marginRight: 8,
-  },
   input: {
-    flex: 1,
     height: 50,
+    borderColor: "#333",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 15,
     color: "#fff",
-    backgroundColor: "transparent",
-    fontSize: 18,
-  },
-  disabledInput: {
-    opacity: 0.5,
+    backgroundColor: "#1E1E1E",
+    fontSize: 16,
   },
   button: {
     backgroundColor: "#1E88E5",
@@ -210,9 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 20,
-    width: "60%",
-    marginTop: 15,
-    alignSelf: "center",
+    marginTop: 20,
   },
   buttonPressed: {
     opacity: 0.9,
@@ -231,6 +140,7 @@ const styles = StyleSheet.create({
     color: "#FF5252",
     marginBottom: 10,
     textAlign: "center",
+    fontSize: 14,
   },
 });
 

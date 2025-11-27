@@ -1,19 +1,20 @@
-import axios from 'axios';
-import { BACKEND_URL } from './config';
+import axios from "axios";
+import { BACKEND_URL } from "./config";
 
-const API_BASE_URL = BACKEND_URL + '/api/auth';
+const API_BASE_URL = BACKEND_URL + "/api/auth";
 
-async function login(idToken: string) {
+async function login(email: string, password: string) {
   const response = await axios.post(`${API_BASE_URL}/login`, {
-    idToken,
+    email,
+    password,
   });
   return response.data;
 }
 
-async function register(idToken: string, email: string, name: string) {
+async function register(email: string, password: string, name: string) {
   const response = await axios.post(`${API_BASE_URL}/register`, {
-    idToken,
     email,
+    password,
     name,
   });
   return response.data;

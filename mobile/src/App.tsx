@@ -9,16 +9,14 @@ import AuthNavigator from "./navigation/AuthNavigator";
 import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { getApp } from "@react-native-firebase/app";
-import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
 import { getMessaging } from "@react-native-firebase/messaging";
-import { login } from "./api/auth";
+import authStorage from "./auth/authStorage";
 
 function App() {
   const isDarkMode = useColorScheme() === "dark";
   const [user, setUser] = useState<any | null>(null);
 
   const firebaseApp = getApp();
-  const auth = getAuth(firebaseApp);
 
   const messaging = getMessaging(firebaseApp);
   messaging.setBackgroundMessageHandler(async remoteMessage => {
@@ -26,28 +24,21 @@ function App() {
   });
   const [initializing, setInitializing] = useState(true);
 
-  async function handleAuthStateChanged(user: any) {
-    await handleLogin();
-    if (initializing) setInitializing(false);
-  }
-  async function handleLogin() {
-    const idToken = await auth.currentUser?.getIdToken();
-    try {
-      if (!idToken) throw new Error("No id token found");
-      const { user: use1r } = await login(idToken);
-      setUser(use1r);
-    } catch (err: any) {
-      console.log(err);
-    }
-  }
-
   useEffect(() => {
-    const subscriber = onAuthStateChanged(
-      getAuth(firebaseApp),
-      handleAuthStateChanged,
-    );
-    // checkBackend();
-    return subscriber; // unsubscribe on unmount
+    const checkStoredUser = async () => {
+      try {
+        const storedUser = await authStorage.getUser();
+        if (storedUser) {
+          setUser(storedUser);
+        }
+      } catch (err) {
+        console.log("Error retrieving stored user:", err);
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    checkStoredUser();
   }, []);
 
   if (initializing) return <></>;

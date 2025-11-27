@@ -1,13 +1,9 @@
-import React from "react";
+import React, { JSX } from "react";
 import { View, StyleSheet, Text, Pressable, Alert, Image } from "react-native";
 import useAuth from "../auth/useAuth";
-import { getAuth, signOut } from "@react-native-firebase/auth";
-import { getApp } from "@react-native-firebase/app";
 
 function SettingsScreen(): JSX.Element {
   const { logout, user } = useAuth();
-  const firebaseApp = getApp();
-  const auth = getAuth(firebaseApp);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -17,7 +13,6 @@ function SettingsScreen(): JSX.Element {
   };
 
   const LogoutFirebase = () => {
-    signOut(auth);
     logout();
   };
   return (
